@@ -22,7 +22,7 @@ namespace boost { namespace tries {
 
 namespace detail {
 
-template <typename Key, typename Value, class Compare>
+template <typename Key, typename Value>
 struct trie_node;
 
 struct list_node_base : protected boost::noncopyable {
@@ -34,13 +34,13 @@ struct list_node_base : protected boost::noncopyable {
 	{}
 };
 
-template <typename Key, typename Value, class Compare>
+template <typename Key, typename Value>
 struct value_list_node : public list_node_base {
 	typedef Key key_type;
 	typedef Value value_type;
-	typedef trie_node<key_type, value_type, Compare> trie_node_type;
+	typedef trie_node<key_type, value_type> trie_node_type;
 	typedef trie_node_type * trie_node_ptr;
-	typedef value_list_node<key_type, value_type, Compare> node_type;
+	typedef value_list_node<key_type, value_type> node_type;
 	typedef node_type * node_ptr;
 	typedef list_node_base * base_ptr;
 	value_type value;
@@ -68,7 +68,7 @@ private:
 
 
 
-template <typename Key, typename Value, class Compare>
+template <typename Key, typename Value>
 struct trie_node : private boost::noncopyable {
 //protected:
 	typedef Key key_type;
@@ -76,12 +76,12 @@ struct trie_node : private boost::noncopyable {
 	typedef Value value_type;
 	typedef value_type * value_ptr;
 	typedef size_t size_type;
-	typedef trie_node<key_type, value_type, Compare> node_type;
+	typedef trie_node<key_type, value_type> node_type;
 	typedef node_type* node_ptr;
-	typedef value_list_node<key_type, value_type, Compare> value_list_type;
+	typedef value_list_node<key_type, value_type> value_list_type;
 	typedef value_list_type * value_list_ptr;
 	// maybe the pointer container of children could be defined by user?!
-	typedef std::map<key_type, node_ptr, Compare> children_type;
+	typedef std::map<key_type, node_ptr> children_type;
 
 	typedef typename children_type::iterator child_iter;
 
@@ -142,7 +142,7 @@ private:
 };
 
 
-template <typename Key, typename Value, typename Reference, typename Pointer, class Compare>
+template <typename Key, typename Value, typename Reference, typename Pointer>
 struct trie_iterator
 {
 	typedef std::bidirectional_iterator_tag iterator_category;
@@ -151,13 +151,13 @@ struct trie_iterator
 	typedef Reference reference;
 	typedef Pointer pointer;
 	typedef ptrdiff_t difference_type;
-	typedef trie_iterator<Key, Value, Value&, Value*, Compare> iterator;
-	typedef trie_iterator<Key, Value, Reference, Pointer, Compare> iter_type;
+	typedef trie_iterator<Key, Value, Value&, Value*> iterator;
+	typedef trie_iterator<Key, Value, Reference, Pointer> iter_type;
 	typedef iter_type self;
-	typedef trie_iterator<Key, Value, const Value&, const Value*, Compare> const_iterator;
-	typedef trie_node<Key, Value, Compare> trie_node_type;
+	typedef trie_iterator<Key, Value, const Value&, const Value*> const_iterator;
+	typedef trie_node<Key, Value> trie_node_type;
 	typedef trie_node_type* trie_node_ptr;
-	typedef value_list_node<Key, Value, Compare> value_node_type;
+	typedef value_list_node<Key, Value> value_node_type;
 	typedef value_node_type* value_node_ptr;
 
 	trie_node_ptr tnode;
@@ -407,18 +407,17 @@ public:
 
 
 
-template <typename Key, typename Value,
-		 class Compare>
+template <typename Key, typename Value>
 class trie {
 public:
 	typedef Key key_type;
 	typedef key_type * key_ptr;
 	typedef Value value_type;
 	typedef value_type* value_ptr;
-	typedef trie<key_type, value_type, Compare> trie_type;
-	typedef typename detail::trie_node<key_type, value_type, Compare> node_type;
+	typedef trie<key_type, value_type> trie_type;
+	typedef typename detail::trie_node<key_type, value_type> node_type;
 	typedef node_type * node_ptr;
-	typedef typename detail::value_list_node<key_type, value_type, Compare> value_node_type;
+	typedef typename detail::value_list_node<key_type, value_type> value_node_type;
 	typedef value_node_type * value_node_ptr;
 
 	typedef std::allocator< node_type > trie_node_allocator;
@@ -774,11 +773,11 @@ public:
 	}
 
 
-	typedef detail::trie_iterator<Key, Value, Value&, Value*, Compare> iterator;
+	typedef detail::trie_iterator<Key, Value, Value&, Value*> iterator;
 	typedef typename iterator::const_iterator const_iterator;
 	typedef detail::trie_reverse_iterator<iterator> reverse_iterator;
 	typedef detail::trie_reverse_iterator<const_iterator> const_reverse_iterator;
-	//typedef detail::trie_reverse_iterator<Key, Value, Value&, Value*, Compare> reverse_iterator;
+	//typedef detail::trie_reverse_iterator<Key, Value, Value&, Value*> reverse_iterator;
 	//typedef typename reverse_iterator::const_reverse_iterator const_reverse_iterator;
 	typedef std::pair<iterator, bool> pair_iterator_bool;
 	typedef std::pair<iterator, iterator> iterator_range;
@@ -997,13 +996,13 @@ public:
 			node_ptr node = find_node(first, last);
 			if (node == NULL)
 			{
-				return make_pair(end(), end());
+				return std::make_pair(end(), end());
 			}
 			iterator begin = leftmost_value(node);
 			// optimization is needed here
 			iterator end = rightmost_value(node);
 			++end;
-			return make_pair(begin, end);
+			return std::make_pair(begin, end);
 		}
 
 	template<typename Container>
@@ -1132,10 +1131,10 @@ public:
 			//return make_pair(lower_bound(first, last), upper_bound(first, last));
 			node_ptr node = find_node(first, last);
 			if (node == NULL || node->value_list_header == NULL)
-				return make_pair(iterator(root), iterator(root));
+				return std::make_pair(iterator(root), iterator(root));
 			iterator it_end = iterator(node->value_list_tail);
 			++it_end;
-			return make_pair(iterator(node->value_list_header), it_end);
+			return std::make_pair(iterator(node->value_list_header), it_end);
 		}
 
 	template<typename Container>

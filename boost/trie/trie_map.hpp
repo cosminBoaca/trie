@@ -10,15 +10,15 @@
 
 namespace boost { namespace tries {
 
-template<typename Key, typename Value,
-		class Compare = std::less<Key> >
+template<typename Key, typename Value>
+		
 class trie_map
 {
 public:
 	typedef Key key_type;
 	typedef Value value_type;
-	typedef trie<key_type, value_type, Compare> trie_type;
-	typedef trie_map<Key, Value, Compare> trie_map_type;
+	typedef trie<key_type, value_type> trie_type;
+	typedef trie_map<Key, Value> trie_map_type;
 	typedef typename trie_type::iterator iterator;
 	typedef typename trie_type::const_iterator const_iterator;
 	typedef typename trie_type::reverse_iterator reverse_iterator;

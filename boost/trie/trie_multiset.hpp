@@ -10,14 +10,14 @@
 
 namespace boost { namespace tries {
 
-template<typename Key, class Compare = std::less<Key> >
+template<typename Key>
 class trie_multiset
 {
 public:
 	typedef Key key_type;
 	typedef boost::blank value_type;
-	typedef trie<key_type, value_type, Compare> trie_type;
-	typedef trie_multiset<Key, Compare> trie_multiset_type;
+	typedef trie<key_type, value_type> trie_type;
+	typedef trie_multiset<Key> trie_multiset_type;
 	typedef typename trie_type::const_iterator iterator;
 	typedef typename trie_type::const_iterator const_iterator;
 	typedef typename trie_type::const_reverse_iterator reverse_iterator;
