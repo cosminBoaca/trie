@@ -192,13 +192,17 @@ public:
 	std::vector<key_type> get_key()
 	{
 		std::vector<key_type> key_path;
-		trie_node_ptr cur = tnode;
-		while (cur->parent != NULL)
+		int path_length = 0;
+		trie_node_ptr cur;
+		for (cur = tnode; cur->parent != NULL; cur = cur->parent)
+			path_length++;
+		key_path.resize(path_length);
+		for (cur = tnode; cur->parent != NULL; cur = cur->parent)
 		{
-			key_path.push_back(cur->key_elem());
-			cur = cur->parent;
+			key_path[path_length - 1] = cur->key_elem();
+			path_length--;
 		}
-		return std::vector<key_type>(key_path.rbegin(), key_path.rend());
+		return key_path;
 	}
 
 	/*
