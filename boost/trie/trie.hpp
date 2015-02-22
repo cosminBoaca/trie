@@ -159,6 +159,7 @@ struct trie_iterator
 	typedef trie_node_type* trie_node_ptr;
 	typedef value_list_node<Key, Value> value_node_type;
 	typedef value_node_type* value_node_ptr;
+	typedef size_t size_type;
 
 	trie_node_ptr tnode;
 	value_node_ptr vnode;
@@ -192,7 +193,7 @@ public:
 	std::vector<key_type> get_key() const
 	{
 		std::vector<key_type> key_path;
-		int path_length = 0;
+		size_type path_length = 0;
 		trie_node_ptr cur;
 		for (cur = tnode; cur->parent != NULL; cur = cur->parent)
 			path_length++;
