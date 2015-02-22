@@ -110,7 +110,7 @@ public:
 	template<typename Container>
 	value_type& operator [] (const Container& container)
 	{
-		return *(t.insert_unique(container, value_type()).first);
+		return (*(t.insert_unique(container, value_type()).first)).second;
 	}
 
 	// insert

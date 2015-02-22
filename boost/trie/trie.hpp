@@ -147,9 +147,9 @@ struct trie_iterator
 {
 	typedef std::bidirectional_iterator_tag iterator_category;
 	typedef Key key_type;
-	typedef Value value_type;
-	typedef Reference reference;
-	typedef Pointer pointer;
+	typedef std::pair<std::vector<key_type>, Value> value_type;
+	typedef std::pair<std::vector<key_type>, Reference> reference;
+	typedef std::pair<std::vector<key_type>, Reference>* pointer;
 	typedef ptrdiff_t difference_type;
 	typedef trie_iterator<Key, Value, Value&, Value*> iterator;
 	typedef trie_iterator<Key, Value, Reference, Pointer> iter_type;
@@ -189,7 +189,7 @@ public:
 	 * a function returns the key on the path should be invented
 	 *
 	 */
-	std::vector<key_type> get_key()
+	std::vector<key_type> get_key() const
 	{
 		std::vector<key_type> key_path;
 		int path_length = 0;
@@ -230,7 +230,7 @@ public:
 
 	reference operator*() const 
 	{
-		return vnode->value;
+		return std::make_pair(get_key(), std::ref(vnode->value));
 	}
 
 	pointer operator->() const
@@ -313,99 +313,6 @@ public:
 		return tmp;
 	}
 }; 
-
-
-template <typename TrieIterator>
-struct trie_reverse_iterator {
-	typedef TrieIterator iter_type;
-	typedef trie_reverse_iterator<iter_type> self;
-	typedef typename std::iterator_traits<TrieIterator>::iterator_category iterator_category;
-	typedef typename std::iterator_traits<TrieIterator>::value_type value_type;
-	typedef typename std::iterator_traits<TrieIterator>::reference reference;
-	typedef typename std::iterator_traits<TrieIterator>::pointer pointer;
-	typedef typename std::iterator_traits<TrieIterator>::difference_type differcent_type;
-
-	typedef typename iter_type::key_type key_type;
-
-	private:
-	iter_type base_iter;
-
-public:
-	trie_reverse_iterator() 
-	{
-	}
-
-	explicit trie_reverse_iterator(iter_type it) : base_iter(it)
-	{
-
-	}
-	trie_reverse_iterator(const self &other) : base_iter(other.base())
-	{
-	}
-
-	template <typename Iter>
-	trie_reverse_iterator(const trie_reverse_iterator<Iter> &other) : base_iter(other.base())
-	{
-	}
-
-	iter_type base() const
-	{
-		return base_iter;
-	}
-
-	std::vector<key_type> get_key()
-	{
-		iter_type tmp = base_iter;
-		return (--tmp).get_key();
-	}
-
-	reference operator*() const 
-	{
-		iter_type tmp = base_iter;
-		return *--tmp;
-	}
-
-	pointer operator->() const
-	{
-		return &(operator*()); 
-	}
-
-	bool operator==(const self& other) const
-	{
-		return base() == other.base();
-	}
-
-	bool operator!=(const self& other) const
-	{
-		return base() != other.base();
-	}
-
-
-	self& operator++() 
-	{
-		--base_iter;
-		return *this;
-	}
-	self operator++(int)
-	{
-		self tmp = *this;
-		--base_iter;
-		return tmp;
-	}
-
-	self& operator--()
-	{
-		++base_iter;
-		return *this;
-	}
-	self operator--(int)
-	{
-		self tmp = *this;
-		++base_iter;
-		return tmp;
-	}
-};
-
 
 } // namespace detail
 
@@ -779,10 +686,8 @@ public:
 
 	typedef detail::trie_iterator<Key, Value, Value&, Value*> iterator;
 	typedef typename iterator::const_iterator const_iterator;
-	typedef detail::trie_reverse_iterator<iterator> reverse_iterator;
-	typedef detail::trie_reverse_iterator<const_iterator> const_reverse_iterator;
-	//typedef detail::trie_reverse_iterator<Key, Value, Value&, Value*> reverse_iterator;
-	//typedef typename reverse_iterator::const_reverse_iterator const_reverse_iterator;
+	typedef std::reverse_iterator<iterator> reverse_iterator;
+	typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 	typedef std::pair<iterator, bool> pair_iterator_bool;
 	typedef std::pair<iterator, iterator> iterator_range;
 
