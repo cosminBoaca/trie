@@ -1,4 +1,4 @@
 cd ./libs/trie/test/
-bjam | grep -E 'passed|failed|error' --colour=auto
+b2 | grep -E 'passed|failed|error' --colour=auto
 cd ../../../
 
