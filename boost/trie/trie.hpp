@@ -1222,18 +1222,18 @@ public:
 		std::swap(t.trie_node_alloc, trie_node_alloc);
 	}
 
-	void clear()
+	void clear(bool delete_root = false)
 	{
 		clear(root);
+		if (delete_root)
+			delete_trie_node(root);
 	}
 
-	size_type count_node() const
-	{
-		return node_count;
+	size_type count_node() const { 
+		return node_count; 
 	}
 
-	size_type size() const
-	{
+	size_type size() const {
 		return root->value_count;
 	}
 
@@ -1241,15 +1241,9 @@ public:
 		return root->value_count == 0;
 	}
 
-	void destroy()
-	{
-		clear(root);
-		delete_trie_node(root);
-	}
-
 	~trie()
 	{
-		destroy();
+		clear(true);
 	}
 
 };
@@ -1257,4 +1251,4 @@ public:
 
 } // tries
 } // boost
-#endif // BOOST_TRIE_HPP
+#endif // BOOST_TRIE_HPP 
