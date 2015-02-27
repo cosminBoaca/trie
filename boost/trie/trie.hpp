@@ -17,6 +17,7 @@
 #include <list>
 #include <boost/utility.hpp>
 #include <boost/type_traits/remove_const.hpp>
+#include <boost/config.hpp>
 
 
 namespace boost { namespace tries {
@@ -143,7 +144,6 @@ private:
 };
 
 
-//template <typename Key, typename Value, typename Reference, typename Pointer>
 template<typename Key, typename Value>
 struct trie_iterator
 {
@@ -236,7 +236,11 @@ public:
 
 	reference operator*() const 
 	{
+#if BOOST_NO_CXX11_RVALUE_REFERENCES
+		return std::make_pair<std::vector<key_type>, Value&>(get_key(), vnode->value);
+#else
 		return std::make_pair(get_key(), std::ref(vnode->value));
+#endif
 	}
 
 	pointer operator->() const
