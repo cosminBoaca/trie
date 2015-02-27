@@ -46,7 +46,7 @@ public:
 
 	iterator begin() 
 	{
-		return t.begin();
+		return t.cbegin();
 	}
 
 	const_iterator begin() const
@@ -61,7 +61,7 @@ public:
 
 	iterator end() 
 	{
-		return t.end();
+		return t.cend();
 	}
 
 	const_iterator end() const
@@ -76,7 +76,7 @@ public:
 
 	reverse_iterator rbegin() 
 	{
-		return t.rbegin();
+		return t.crbegin();
 	}
 
 	const_reverse_iterator rbegin() const
@@ -91,7 +91,7 @@ public:
 
 	reverse_iterator rend() 
 	{
-		return t.rend();
+		return t.crend();
 	}
 
 	const_reverse_iterator rend() const
