@@ -16,6 +16,7 @@
 #include <vector>
 #include <list>
 #include <boost/utility.hpp>
+#include <boost/type_traits/remove_const.hpp>
 
 
 namespace boost { namespace tries {
@@ -142,22 +143,24 @@ private:
 };
 
 
-template <typename Key, typename Value, typename Reference, typename Pointer>
+//template <typename Key, typename Value, typename Reference, typename Pointer>
+template<typename Key, typename Value>
 struct trie_iterator
 {
 	typedef std::bidirectional_iterator_tag iterator_category;
 	typedef Key key_type;
 	typedef std::pair<std::vector<key_type>, Value> value_type;
-	typedef std::pair<std::vector<key_type>, Reference> reference;
-	typedef std::pair<std::vector<key_type>, Reference>* pointer;
+	typedef std::pair<std::vector<key_type>, Value&> reference;
+	typedef std::pair<std::vector<key_type>, Value&>* pointer;
 	typedef ptrdiff_t difference_type;
-	typedef trie_iterator<Key, Value, Value&, Value*> iterator;
-	typedef trie_iterator<Key, Value, Reference, Pointer> iter_type;
+	typedef typename boost::remove_const<Value>::type non_const_value_type;
+	typedef trie_iterator<Key, non_const_value_type> iterator;
+	typedef trie_iterator<Key, Value> iter_type;
 	typedef iter_type self;
-	typedef trie_iterator<Key, Value, const Value&, const Value*> const_iterator;
-	typedef trie_node<Key, Value> trie_node_type;
+	typedef trie_iterator<Key, const Value> const_iterator;
+	typedef trie_node<Key, non_const_value_type> trie_node_type;
 	typedef trie_node_type* trie_node_ptr;
-	typedef value_list_node<Key, Value> value_node_type;
+	typedef value_list_node<Key, non_const_value_type> value_node_type;
 	typedef value_node_type* value_node_ptr;
 	typedef size_t size_type;
 
@@ -173,9 +176,11 @@ public:
 	{
 	}
 
+
 	trie_iterator(value_node_ptr x) : tnode(x->node_in_trie), vnode(x)
 	{
 	}
+
 
 	explicit trie_iterator(trie_node_ptr t, value_node_ptr v) : tnode(t), vnode(v)
 	{
@@ -293,6 +298,7 @@ public:
 		// increment
 		return *this;
 	}
+
 	self operator++(int)
 	{
 		self tmp = *this;
@@ -685,7 +691,7 @@ public:
 	}
 
 
-	typedef detail::trie_iterator<Key, Value, Value&, Value*> iterator;
+	typedef detail::trie_iterator<Key, Value> iterator;
 	typedef typename iterator::const_iterator const_iterator;
 	typedef std::reverse_iterator<iterator> reverse_iterator;
 	typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
