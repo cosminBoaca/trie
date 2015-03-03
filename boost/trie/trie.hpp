@@ -5,7 +5,6 @@
 #pragma once
 #endif
 
-
 #include <map>
 #include <iterator>
 #include <utility>
@@ -17,8 +16,6 @@
 #include <list>
 #include <boost/utility.hpp>
 #include <boost/type_traits/remove_const.hpp>
-#include <boost/config.hpp>
-
 
 namespace boost { namespace tries {
 
@@ -48,7 +45,7 @@ struct value_list_node : public list_node_base {
 	value_type value;
 	trie_node_ptr node_in_trie;
 	explicit value_list_node() : value(), node_in_trie(0)
-	{	
+	{
 	}
 
 	explicit value_list_node(const value_type& x) : value(x), node_in_trie(0)
@@ -67,8 +64,6 @@ private:
 	}
 	*/
 };
-
-
 
 template <typename Key, typename Value>
 struct trie_node : private boost::noncopyable {
@@ -95,7 +90,7 @@ struct trie_node : private boost::noncopyable {
 	// utilize that the iterator in map does not change after insertion
 	child_iter child_iter_of_parent;
 
-	// it is used for something like count_prefix 
+	// it is used for something like count_prefix
 	//size_type node_count;
 	size_type value_count;
 	size_type self_value_count;
@@ -109,8 +104,8 @@ struct trie_node : private boost::noncopyable {
 	node_ptr pred_node;
 	node_ptr next_node;
 
-	explicit trie_node() : parent(0), value_count(0), self_value_count(0), 
-	value_list_header(0), value_list_tail(0), leftmost_value_node(0), rightmost_value_node(0), 
+	explicit trie_node() : parent(0), value_count(0), self_value_count(0),
+	value_list_header(0), value_list_tail(0), leftmost_value_node(0), rightmost_value_node(0),
 	pred_node(0), next_node(0)
 	{
 	}
@@ -140,7 +135,6 @@ private:
 	{
 	}
 	*/
-
 };
 
 
@@ -230,22 +224,18 @@ public:
 	template<typename Container>
 	Container<key_type> get_key(Container<key_type>& container)
 	{
-		
+
 	}
 	*/
 
-	reference operator*() const 
+	reference operator*() const
 	{
-#if BOOST_NO_CXX11_RVALUE_REFERENCES
-		return std::make_pair<std::vector<key_type>, Value&>(get_key(), vnode->value);
-#else
-		return std::make_pair(get_key(), std::ref(vnode->value));
-#endif
+		return std::pair<std::vector<key_type>, Value&>(get_key(), vnode->value);
 	}
 
 	pointer operator->() const
 	{
-		return &(operator*()); 
+		return &(operator*());
 	}
 
 	bool operator==(const trie_iterator& other) const
@@ -296,7 +286,7 @@ public:
 		vnode = tnode->value_list_tail;
 	}
 
-	self& operator++() 
+	self& operator++()
 	{
 		increment();
 		// increment
@@ -323,7 +313,7 @@ public:
 		decrement();
 		return tmp;
 	}
-}; 
+};
 
 } // namespace detail
 
@@ -388,15 +378,15 @@ private:
 		cur->value_list_header = cur->value_list_tail = NULL;
 	}
 
-	node_ptr get_trie_node() 
+	node_ptr get_trie_node()
 	{
 		node_ptr new_node = trie_node_alloc.allocate(1);
 		if (new_node != NULL)
-			++node_count; 
+			++node_count;
 		return new_node;
 	}
 
-	node_ptr create_trie_node() 
+	node_ptr create_trie_node()
 	{
 		node_ptr tmp = get_trie_node();
 		if (tmp != NULL)
@@ -406,13 +396,13 @@ private:
 		return tmp;
 	}
 
-	node_ptr create_trie_node(const value_type& value) 
+	node_ptr create_trie_node(const value_type& value)
 	{
 		node_ptr tmp = get_trie_node();
 		if (tmp != NULL)
 		{
 			new(tmp) node_type();
-			value_node_ptr vn = new_value_node(value); 
+			value_node_ptr vn = new_value_node(value);
 			value_list_push(tmp, vn);
 		}
 		return tmp;
@@ -442,7 +432,7 @@ private:
 			new(tmp) node_type();
 			while (vl_header != NULL)
 			{
-				value_node_ptr vn = new_value_node(vl_header->value); 
+				value_node_ptr vn = new_value_node(vl_header->value);
 				value_list_push(tmp, vn);
 				vl_header = static_cast<value_node_ptr>(vl_header->next);
 			}
@@ -702,7 +692,7 @@ public:
 	typedef std::pair<iterator, bool> pair_iterator_bool;
 	typedef std::pair<iterator, iterator> iterator_range;
 
-	iterator begin() 
+	iterator begin()
 	{
 		value_node_ptr vp = leftmost_value(root);
 		if (vp == NULL)
@@ -726,7 +716,7 @@ public:
 		else return vp;
 	}
 
-	iterator end() 
+	iterator end()
 	{
 		return root;
 	}
@@ -741,7 +731,7 @@ public:
 		return root;
 	}
 
-	reverse_iterator rbegin() 
+	reverse_iterator rbegin()
 	{
 		return static_cast<reverse_iterator>(end());
 	}
@@ -756,7 +746,7 @@ public:
 		return rbegin();
 	}
 
-	reverse_iterator rend() 
+	reverse_iterator rend()
 	{
 		return static_cast<reverse_iterator>(begin());
 	}
@@ -1220,7 +1210,7 @@ public:
 		}
 		// erase rightmost
 		erase_node(cur);
-		
+
 		return ret;
 	}
 
@@ -1240,8 +1230,8 @@ public:
 			delete_trie_node(root);
 	}
 
-	size_type count_node() const { 
-		return node_count; 
+	size_type count_node() const {
+		return node_count;
 	}
 
 	size_type size() const {
@@ -1262,4 +1252,4 @@ public:
 
 } // tries
 } // boost
-#endif // BOOST_TRIE_HPP 
+#endif // BOOST_TRIE_HPP
