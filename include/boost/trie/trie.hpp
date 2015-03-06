@@ -8,6 +8,10 @@
 #include <stack>
 #include <boost/trie/detail/trie_node.hpp>
 #include <boost/trie/detail/trie_iterator.hpp>
+#include <boost/static_assert.hpp>
+#include <boost/type_traits/is_void.hpp>
+#include <boost/mpl/if.hpp>
+#include <boost/blank.hpp>
 
 namespace boost { namespace tries {
 
@@ -15,9 +19,16 @@ template <typename Key, typename Value>
 class trie {
 public:
 	typedef Key key_type;
+	typedef typename boost::mpl::if_
+	<
+		boost::is_void<Value>,
+		boost::blank,
+		Value
+	>::type non_void_value_type;
+
 	typedef Value value_type;
 	typedef value_type* value_ptr;
-	typedef trie<key_type, value_type> trie_type;
+	typedef trie<key_type, Value> trie_type;
 	typedef typename detail::trie_node<key_type, value_type> node_type;
 	typedef node_type * node_ptr;
 	typedef typename detail::value_list_node<key_type, value_type> value_node_type;
@@ -34,7 +45,8 @@ private:
 	node_ptr root;
 	size_type node_count; // node_count is difficult and useless to maintain on each node, so, put it on the tree
 
-	value_node_ptr new_value_node(const value_type& x)
+	/*
+	value_node_ptr new_value_node(const non_void_value_type& x)
 	{
 		value_node_ptr v = value_alloc.allocate(1);
 		if (v == NULL)
@@ -42,35 +54,20 @@ private:
 		new(v) value_node_type(x);
 		return v;
 	}
-
-	bool delete_value_node(value_node_ptr p)
+	*/
+	
+	/*	
+	void delete_value_node(value_node_ptr p)
 	{
 		if (!p)
-			return false;
+			return;
 		--p->node_in_trie->self_value_count;
 		value_alloc.destroy(p);
 		value_alloc.deallocate(p, 1);
-		return true;
 	}
+	*/
 
-	void erase_value_list(node_ptr cur)
-	{
-		value_node_ptr vp = cur->value_list_header;
-		if (!cur->no_value())
-		{
-			while (vp != NULL)
-			{
-				value_node_ptr tmp = static_cast<value_node_ptr>(vp->next);
-				delete_value_node(vp);
-				vp = tmp;
-			}
-		}
-		cur->self_value_count = 0;
-		cur->value_list_header = cur->value_list_tail = NULL;
-	}
-
-	node_ptr get_trie_node()
-	{
+	node_ptr get_trie_node() {
 		node_ptr new_node = trie_node_alloc.allocate(1);
 		if (new_node != NULL)
 			++node_count;
@@ -93,12 +90,15 @@ private:
 		if (tmp != NULL)
 		{
 			new(tmp) node_type();
-			value_node_ptr vn = new_value_node(value);
-			value_list_push(tmp, vn);
+			value_node_ptr vn = new value_node_type(value);
+			//value_list_push(tmp, vn);
+			tmp->add_value(vn);
 		}
 		return tmp;
 	}
 
+*
+	/*
 	void value_list_push(node_ptr tmp, value_node_ptr vn)
 	{
 		vn->node_in_trie = tmp;
@@ -114,6 +114,8 @@ private:
 		tmp->value_list_header = vn;
 		++tmp->self_value_count;
 	}
+	*/
+	
 
 	node_ptr create_trie_node(value_node_ptr vl_header)
 	{
@@ -123,24 +125,25 @@ private:
 			new(tmp) node_type();
 			while (vl_header != NULL)
 			{
-				value_node_ptr vn = new_value_node(vl_header->value);
-				value_list_push(tmp, vn);
+				value_node_ptr vn = new value_node_type(vl_header->value);
+		//		value_list_push(tmp, vn);
+				tmp->add_value(vn);
 				vl_header = static_cast<value_node_ptr>(vl_header->next);
 			}
 		}
 		return tmp;
 	}
 
-	bool delete_trie_node(node_ptr p)
+	void delete_trie_node(node_ptr p)
 	{
 		if (p == NULL)
-			return false;
-		erase_value_list(p);
+			return;
+		//erase_value_list(p);
+		p->remove_values();
 		// actually delete the node
 		trie_node_alloc.destroy(p);
 		trie_node_alloc.deallocate(p, 1);
 		node_count--;
-		return true;
 	}
 
 	// need constant time to get leftmost
@@ -291,6 +294,7 @@ private:
 		return tnode;
 	}
 
+	/*
 	node_ptr pred_node_with_value(node_ptr tnode)
 	{
 		node_ptr cur = tnode;
@@ -334,6 +338,7 @@ private:
 		tnode = p;
 		return tnode;
 	}
+	*/
 
 	void link_node(node_ptr cur)
 	{
@@ -464,8 +469,9 @@ public:
 				cur = ci->second;
 			}
 			// insert the new value node into value_list
-			value_node_ptr vn = new_value_node(value);
-			value_list_push(cur, vn);
+			value_node_ptr vn = new value_node_type(value);
+			//value_list_push(cur, vn);
+			cur->add_value(vn);
 
 			if (cur->next_node == 0 || cur->pred_node == 0)
 				link_node(cur);
@@ -480,6 +486,59 @@ public:
 			}
 
 			return cur->value_list_header;
+		}
+
+	template<typename Iter>
+		pair_iterator_bool insert_unique(Iter first, Iter last)
+		{
+			BOOST_STATIC_ASSERT_MSG(boost::is_void<Value>::value,
+					"Value template parameter should be void");
+
+			node_ptr cur = root;
+			for (; first != last; ++first)
+			{
+				const key_type& cur_key = *first;
+				typename node_type::children_iter ci = cur->children.find(cur_key);
+				if (ci == cur->children.end())
+					break;
+				cur = ci->second;
+			}
+
+			if (first == last && !cur->no_value()) {
+				return std::make_pair(iterator(cur), false);
+			}
+
+			for (; first != last; ++first)
+			{
+				const key_type& cur_key = *first;
+				node_ptr new_node = create_trie_node();
+				new_node->parent = cur;
+				typename node_type::children_iter ci = cur->children.insert(std::make_pair(cur_key, new_node)).first;
+				new_node->child_iter_of_parent = ci;
+				cur = ci->second;
+			}
+
+			if (cur->next_node == 0 || cur->pred_node == 0)
+				link_node(cur);
+			cur->key_ends_here = true;
+
+			// update value_count on the path
+			node_ptr tmp = cur;
+			while (tmp != NULL) // until root
+			{
+				++tmp->value_count;
+				tmp = tmp->parent;
+			}
+
+			return std::make_pair(iterator(cur), true);
+		}
+
+	template<typename Container>
+		pair_iterator_bool insert_unique(const Container &container)
+		{
+			BOOST_STATIC_ASSERT_MSG(boost::is_void<Value>::value,
+					"Value template parameter should be void");
+			return insert_unique(container.begin(), container.end());
 		}
 
 	template<typename Iter>
@@ -501,7 +560,7 @@ public:
 				return std::make_pair(__insert(cur, first, last, value), true);
 			}
 
-			return std::make_pair((iterator)cur, false);
+			return std::make_pair(iterator(cur), false);
 		}
 
 	template<typename Container>
@@ -770,7 +829,8 @@ public:
 			return ret;
 		ret = node->self_value_count;
 		node_ptr cur = node;
-		erase_value_list(cur);
+		//erase_value_list(cur);
+		cur->remove_values();
 		unlink_node(cur);
 
 		erase_check_ancestor(cur, ret);
@@ -805,8 +865,8 @@ public:
 			else { // is value_list_tail
 				cur->value_list_tail = static_cast<value_node_ptr>(vp->pred);
 			}
-			delete_value_node(vp);
-
+			//delete_value_node(vp);
+			delete vp;
 			erase_check_ancestor(cur, 1);
 		}
 		return ret;

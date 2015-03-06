@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <boost/utility.hpp>
+#include <memory>
 
 namespace boost { namespace tries {
 
@@ -36,12 +37,17 @@ struct value_list_node : public list_node_base {
 	typedef list_node_base * base_ptr;
 	value_type value;
 	trie_node_ptr node_in_trie;
+
 	explicit value_list_node() : value(), node_in_trie(0)
 	{
 	}
 
 	explicit value_list_node(const value_type& x) : value(x), node_in_trie(0)
 	{
+	}
+
+	~value_list_node() {
+		node_in_trie->self_value_count--;
 	}
 };
 
@@ -103,6 +109,36 @@ struct trie_node : private boost::noncopyable {
 	{
 		return self_value_count == 0;
 	}
+
+	void remove_values() {
+		value_node_ptr vp = value_list_header;
+		if (!no_value())
+		{
+			while (vp != NULL)
+			{
+				value_node_ptr tmp = static_cast<value_node_ptr>(vp->next);
+				delete vp;
+				vp = tmp;
+			}
+		}
+		self_value_count = 0;
+		value_list_header = value_list_tail = NULL;
+	}
+
+	void add_value(value_node_ptr vn) {
+		vn->node_in_trie = this;
+		vn->next = this->value_list_header;
+		if (this->value_list_header != NULL)
+		{
+			this->value_list_header->pred = vn;
+		}
+		else {
+			// empty list
+			this->value_list_tail = vn;
+		}
+		this->value_list_header = vn;
+		++this->self_value_count;
+	}
 };
 
 template <typename Key>
@@ -156,6 +192,10 @@ struct trie_node<Key, void> : private boost::noncopyable {
 	bool no_value() const
 	{
 		return !key_ends_here;
+	}
+
+	void add_value() {
+
 	}
 };
 

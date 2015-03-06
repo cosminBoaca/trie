@@ -15,8 +15,7 @@ class trie_set
 {
 public:
 	typedef Key key_type;
-	typedef boost::blank value_type;
-	typedef trie<key_type, value_type> trie_type;
+	typedef trie<key_type, void> trie_type;
 	typedef trie_set<Key> trie_set_type;
 	typedef typename trie_type::const_iterator iterator;
 	typedef typename trie_type::const_iterator const_iterator;
@@ -109,13 +108,13 @@ public:
 	template<typename Iter>
 	std::pair<iterator, bool> insert(Iter first, Iter last)
 	{
-		return t.insert_unique(first, last, value_type());
+		return t.insert_unique(first, last);
 	}
 
 	template<typename Container>
 	std::pair<iterator, bool> insert(const Container& container)
 	{
-		return t.insert_unique(container, value_type());
+		return t.insert_unique(container);
 	}
 
 	// find
@@ -129,19 +128,6 @@ public:
 	iterator find(const Container& container)
 	{
 		return t.find(container);
-	}
-
-	// count
-	template<typename Iter>
-	size_type count(Iter first, Iter last)
-	{
-		return t.count(first, last);
-	}
-
-	template<typename Container>
-	size_type count(const Container& container)
-	{
-		return t.count(container);
 	}
 
 	template<typename Iter>

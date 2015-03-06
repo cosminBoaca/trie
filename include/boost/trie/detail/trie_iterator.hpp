@@ -189,6 +189,124 @@ public:
 	}
 };
 
+template<class Key>
+struct trie_iterator<Key, void>
+{
+	typedef std::bidirectional_iterator_tag iterator_category;
+	typedef Key key_type;
+	typedef std::vector<key_type> value_type;
+	typedef const std::vector<key_type>& reference;
+	typedef std::vector<key_type>* pointer;
+	typedef ptrdiff_t difference_type;
+	typedef trie_iterator<Key, void> iterator;
+	typedef trie_iterator<Key, void> iter_type;
+	typedef iter_type self;
+	typedef trie_iterator<Key, const void> const_iterator;
+	typedef trie_node<Key, void> trie_node_type;
+	typedef trie_node_type* trie_node_ptr;
+	typedef size_t size_type;
+
+	trie_node_ptr tnode;
+
+public:
+	explicit trie_iterator() : tnode(0)
+	{
+	}
+
+	trie_iterator(trie_node_ptr x) : tnode(x)
+	{
+	}
+
+	trie_iterator(const iterator &it) : tnode(it.tnode)
+	{
+	}
+
+	/*
+	 *
+	 * a function returns the key on the path should be invented
+	 *
+	 */
+	std::vector<key_type> get_key() const
+	{
+		std::vector<key_type> key_path;
+		size_type path_length = 0;
+		trie_node_ptr cur;
+		for (cur = tnode; cur->parent != NULL; cur = cur->parent)
+			path_length++;
+		key_path.resize(path_length);
+		for (cur = tnode; cur->parent != NULL; cur = cur->parent)
+		{
+			key_path[path_length - 1] = cur->key_elem();
+			path_length--;
+		}
+		return key_path;
+	}
+
+	reference operator*() const
+	{
+		return get_key();
+	}
+
+	pointer operator->() const
+	{
+		return &(operator*());
+	}
+
+	bool operator==(const trie_iterator& other) const
+	{
+		return tnode == other.tnode;
+	}
+
+	bool operator!=(const trie_iterator& other) const
+	{
+		return tnode != other.tnode;
+	}
+
+	void trie_node_increment()
+	{
+		// at iterator end
+		if (tnode->parent == NULL)
+			return;
+		tnode = tnode->next_node;
+	}
+
+	void trie_node_decrement()
+	{
+		// a begin iterator
+		if (tnode->pred_node->parent == NULL)
+			return;
+		tnode = tnode->pred_node;
+	}
+
+	self& operator++()
+	{
+		trie_node_increment();
+		// increment
+		return *this;
+	}
+
+	self operator++(int)
+	{
+		self tmp = *this;
+		trie_node_increment();
+		// increment
+		return tmp;
+	}
+
+	self& operator--()
+	{
+		// decrement
+		trie_node_decrement();
+		return *this;
+	}
+	self operator--(int)
+	{
+		self tmp = *this;
+		trie_node_decrement();
+		return tmp;
+	}
+};
+
 } /* detail */
 } /* tries */
 } /* boost */
