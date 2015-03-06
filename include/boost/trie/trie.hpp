@@ -51,25 +51,12 @@ struct value_list_node : public list_node_base {
 	explicit value_list_node(const value_type& x) : value(x), node_in_trie(0)
 	{
 	}
-
-	/*
-private:
-	explicit value_list_node(const node_type&)
-	{
-
-	}
-
-	node_type& operator=(const node_type&)
-	{
-	}
-	*/
 };
 
 template <typename Key, typename Value>
 struct trie_node : private boost::noncopyable {
 //protected:
 	typedef Key key_type;
-	typedef key_type* key_ptr;
 	typedef Value value_type;
 	typedef value_type * value_ptr;
 	typedef size_t size_type;
@@ -98,14 +85,14 @@ struct trie_node : private boost::noncopyable {
 	value_list_ptr value_list_header;
 	value_list_ptr value_list_tail;
 
-	value_list_ptr leftmost_value_node;
-	value_list_ptr rightmost_value_node;
+//	value_list_ptr leftmost_value_node;
+//	value_list_ptr rightmost_value_node;
 
 	node_ptr pred_node;
 	node_ptr next_node;
 
 	explicit trie_node() : parent(0), value_count(0), self_value_count(0),
-	value_list_header(0), value_list_tail(0), leftmost_value_node(0), rightmost_value_node(0),
+	value_list_header(0), value_list_tail(0),
 	pred_node(0), next_node(0)
 	{
 	}
@@ -124,19 +111,7 @@ struct trie_node : private boost::noncopyable {
 	{
 		return self_value_count == 0;
 	}
-
-	/*
-private:
-	explicit trie_node(const node_type&)
-	{
-	}
-
-	node_type& operator=(const node_type&)
-	{
-	}
-	*/
 };
-
 
 template<typename Key, typename Value>
 struct trie_iterator
@@ -230,7 +205,7 @@ public:
 
 	reference operator*() const
 	{
-		return std::pair<std::vector<key_type>, Value&>(get_key(), vnode->value);
+		return reference(get_key(), vnode->value);
 	}
 
 	pointer operator->() const
@@ -323,7 +298,6 @@ template <typename Key, typename Value>
 class trie {
 public:
 	typedef Key key_type;
-	typedef key_type * key_ptr;
 	typedef Value value_type;
 	typedef value_type* value_ptr;
 	typedef trie<key_type, value_type> trie_type;
@@ -465,11 +439,9 @@ private:
 
 	value_node_ptr leftmost_value(node_ptr node) const
 	{
-		/*
 		node = leftmost_node(node);
 		return static_cast<value_node_ptr>(node->value_list_header);
-		*/
-		return node->leftmost_value_node;
+//		return node->leftmost_value_node;
 	}
 
 	// need constant time to get rightmost
@@ -485,13 +457,12 @@ private:
 
 	value_node_ptr rightmost_value(node_ptr node) const
 	{
-		/*
 		node = rightmost_node(node);
 		return static_cast<value_node_ptr>(node->value_list_tail);
-		*/
-		return node->rightmost_value_node;
+		//return node->rightmost_value_node;
 	}
 
+	/*
 	void update_left_and_right(node_ptr node)
 	{
 		if (node->child.empty())
@@ -509,6 +480,7 @@ private:
 		}
 		node->rightmost_value_node = node->child.rbegin()->second->rightmost_value_node;
 	}
+	*/
 
 	// copy the whole trie tree
 	void copy_tree(node_ptr other_root)
@@ -533,7 +505,7 @@ private:
 			if (ci_stk.top() == other_cur->child.end())
 			{
 				//all the child nodes of self_cur have been copied, update leftmost and rightmost value_node of the self_cur
-				update_left_and_right(self_cur);
+				//update_left_and_right(self_cur);
 
 				other_node_stk.pop();
 				ci_stk.pop();
@@ -785,7 +757,7 @@ public:
 			node_ptr tmp = cur;
 			while (tmp != NULL) // until root
 			{
-				update_left_and_right(tmp);
+				//update_left_and_right(tmp);
 				++tmp->value_count;
 				tmp = tmp->parent;
 			}
@@ -1066,7 +1038,7 @@ public:
 		// update value_count on each ancestral node
 		while (cur != NULL)
 		{
-			update_left_and_right(cur);
+			//update_left_and_right(cur);
 			cur->value_count -= delta;
 			cur = cur->parent;
 		}
