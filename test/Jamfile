@@ -14,7 +14,7 @@ local boost_root = [ modules.peek : BOOST_ROOT ] ;
 project
     : requirements 
       <include>$(boost_root)
-      <include>../../../
+      <include>../include/
       <library>$(boost_root)stage/lib/libboost_unit_test_framework.a
       <testing.launcher>valgrind
     ;

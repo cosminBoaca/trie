@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(iterator_operator_minus)
 	BOOST_CHECK(ti == t.end());
 	--ti;
 	BOOST_CHECK((*ti).second == 4);
-	int node_cnt = 4 + 2 + 4 + 2;
+	size_t node_cnt = 4 + 2 + 4 + 2;
 	t[s4] = 5;
 	t[s5] = 6;
 	BOOST_CHECK(t.count_node() == node_cnt);
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(clear)
 {
 	tmm t;
 	t[s] = t[s1] = t[s2] = t[s3] = 10;
-	int node_cnt = t.count_node();
+	size_t node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
 	BOOST_CHECK(t.count_node() == node_cnt);
 	t.clear();
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(erase_iterator)
 	t[s1] = 2;
 	t[s2] = 3;
 	t[s3] = 4;
-	int node_cnt = t.count_node();
+	size_t node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
 	BOOST_CHECK(t.count_node() == node_cnt);
 	tmm::iterator ti;
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(erase_key)
 	t[s1] = 2;
 	t[s2] = 3;
 	t[s3] = 4;
-	int node_cnt = t.count_node();
+	size_t node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
 	BOOST_CHECK(t.count_node() == node_cnt);
 	tmm::iterator ti;

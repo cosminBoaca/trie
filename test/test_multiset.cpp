@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(erase_test)
 	a.insert(s2);
 	a.insert(s);
 	i = a.begin();
-	int size = 3;
+	size_t size = 3;
 	while (i != a.end())
 	{
 		i = a.erase(i);
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(equal_range_test)
 	a.erase(i);
 	std::cout << "dd" << std::endl;
 	std::pair< ti, ti > pii = a.equal_range(s);
-	int count = 0;
+	size_t count = 0;
 	std::cout << "dd" << std::endl;
 	ti first = pii.first, last = pii.second;
 	for (; first != last; ++first)
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(reverse_iterator_test)
 	a.insert(s2);
 	//a.insert(s);
 
-	int count = 0;
+	size_t count = 0;
 	rti ri = a.rbegin();
 	if (ri == a.rend())
 		std::cout << "end" << std::endl;

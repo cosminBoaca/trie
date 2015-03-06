@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE(clear)
 	boost::tries::trie_map<char, int> t;
 	std::string s = "aaa", s1 = "aaaa", s2 = "aab", s3 = "bbb";
 	t[s] = t[s1] = t[s2] = t[s3] = 10;
-	int node_cnt = t.count_node();
+	size_t node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
 	BOOST_CHECK(t.count_node() == node_cnt);
 	t.clear();
@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE(erase_iterator)
 	t[s1] = 2;
 	t[s2] = 3;
 	t[s3] = 4;
-	int node_cnt = t.count_node();
+	size_t node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
 	std::cout << t.size() << ' ' << t.count_node() << std::endl;
 	BOOST_CHECK(t.count_node() == node_cnt);
@@ -341,7 +341,7 @@ BOOST_AUTO_TEST_CASE(erase_key)
 	t[s1] = 2;
 	t[s2] = 3;
 	t[s3] = 4;
-	int node_cnt = t.count_node();
+	size_t node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
 	std::cout << t.size() << ' ' << t.count_node() << std::endl;
 	BOOST_CHECK(t.count_node() == node_cnt);
