@@ -67,15 +67,15 @@ struct trie_node : private boost::noncopyable {
 	// maybe the pointer container of children could be defined by user?!
 	typedef std::map<key_type, node_ptr> children_type;
 
-	typedef typename children_type::iterator child_iter;
+	typedef typename children_type::iterator children_iter;
 
-	children_type child;
+	children_type children;
 
 //public:
 	node_ptr parent;
 	// store the iterator to optimize operator++ and operator--
 	// utilize that the iterator in map does not change after insertion
-	child_iter child_iter_of_parent;
+	children_iter child_iter_of_parent;
 
 	// it is used for something like count_prefix
 	//size_type node_count;
@@ -430,9 +430,9 @@ private:
 	node_ptr leftmost_node(node_ptr node) const
 	{
 		node_ptr cur = node;
-		while (!cur->child.empty() && cur->no_value())
+		while (!cur->children.empty() && cur->no_value())
 		{
-			cur = cur->child.begin()->second;
+			cur = cur->children.begin()->second;
 		}
 		return cur;
 	}
@@ -448,9 +448,9 @@ private:
 	node_ptr rightmost_node(node_ptr node) const
 	{
 		node_ptr cur = node;
-		while (!cur->child.empty())
+		while (!cur->children.empty())
 		{
-			cur = cur->child.rbegin()->second;
+			cur = cur->children.rbegin()->second;
 		}
 		return cur;
 	}
@@ -465,7 +465,7 @@ private:
 	/*
 	void update_left_and_right(node_ptr node)
 	{
-		if (node->child.empty())
+		if (node->children.empty())
 		{
 			node->leftmost_value_node = node->value_list_header;
 			node->rightmost_value_node = node->value_list_tail;
@@ -476,9 +476,9 @@ private:
 			node->leftmost_value_node = node->value_list_header;
 		}
 		else {
-			node->leftmost_value_node = node->child.begin()->second->leftmost_value_node;
+			node->leftmost_value_node = node->children.begin()->second->leftmost_value_node;
 		}
-		node->rightmost_value_node = node->child.rbegin()->second->rightmost_value_node;
+		node->rightmost_value_node = node->children.rbegin()->second->rightmost_value_node;
 	}
 	*/
 
@@ -493,16 +493,16 @@ private:
 		// but inserting one by one need key, so it is hard to do that
 
 		std::stack<node_ptr> other_node_stk, self_node_stk;
-		std::stack<typename node_type::child_iter> ci_stk;
+		std::stack<typename node_type::children_iter> ci_stk;
 		other_node_stk.push(other_root);
 		self_node_stk.push(root);
 		root->pred_node = root->next_node = root;
-		ci_stk.push(other_root->child.begin());
+		ci_stk.push(other_root->children.begin());
 		for (; !other_node_stk.empty(); )
 		{
 			node_ptr other_cur = other_node_stk.top();
 			node_ptr self_cur = self_node_stk.top();
-			if (ci_stk.top() == other_cur->child.end())
+			if (ci_stk.top() == other_cur->children.end())
 			{
 				//all the child nodes of self_cur have been copied, update leftmost and rightmost value_node of the self_cur
 				//update_left_and_right(self_cur);
@@ -524,13 +524,13 @@ private:
 				new_node->self_value_count = c->self_value_count;
 				new_node->value_count = c->value_count;
 				new_node->parent = self_cur;
-				new_node->child_iter_of_parent = self_cur->child.insert(std::make_pair(ci_stk.top()->first, new_node)).first;
+				new_node->child_iter_of_parent = self_cur->children.insert(std::make_pair(ci_stk.top()->first, new_node)).first;
 				if (!new_node->no_value())
 					link_node(new_node);
 				// to next node
 				++ci_stk.top();
 				other_node_stk.push(c);
-				ci_stk.push(c->child.begin());
+				ci_stk.push(c->children.begin());
 				self_node_stk.push(new_node);
 			}
 		}
@@ -544,10 +544,10 @@ private:
 		if (tnode->parent == NULL)
 			return tnode;
 		node_ptr cur = tnode;
-		if (!cur->child.empty())
+		if (!cur->children.empty())
 		{ // go down to the first node with a value in it, and there always be at least one
 			do {
-				cur = cur->child.begin()->second;
+				cur = cur->children.begin()->second;
 			} while (cur->no_value());
 			tnode = cur;
 		} else {
@@ -556,14 +556,14 @@ private:
 			while (cur->parent != NULL)
 			{
 				node_ptr p = cur->parent;
-				typename node_type::child_iter ci = cur->child_iter_of_parent;
+				typename node_type::children_iter ci = cur->child_iter_of_parent;
 				++ci;
-				if (ci != p->child.end())
+				if (ci != p->children.end())
 				{
 					cur = ci->second;
 					//"change value to self_value_count
 					while (cur->no_value()) {
-						cur = cur->child.begin()->second;
+						cur = cur->children.begin()->second;
 					}
 					break;
 				}
@@ -580,16 +580,16 @@ private:
 		// handle the decrement of end()
 		if (cur->parent == NULL)
 		{
-			while (!cur->child.empty())
+			while (!cur->children.empty())
 			{
-				cur = cur->child.rbegin()->second;
+				cur = cur->children.rbegin()->second;
 			}
 			tnode = cur;
 			return tnode;
 		}
 		node_ptr p = cur->parent;
-		typename node_type::child_iter ci = cur->child_iter_of_parent;
-		while (p != NULL && ci == p->child.begin() && p->no_value())
+		typename node_type::children_iter ci = cur->child_iter_of_parent;
+		while (p != NULL && ci == p->children.begin() && p->no_value())
 		{
 			cur = p;
 			p = cur->parent;
@@ -602,13 +602,13 @@ private:
 			return tnode;
 		}
 		// go down the trie
-		if (ci != p->child.begin())
+		if (ci != p->children.begin())
 		{
 			--ci;
 			cur = ci->second;
-			while (!cur->child.empty())
+			while (!cur->children.empty())
 			{
-				cur = cur->child.rbegin()->second;
+				cur = cur->children.rbegin()->second;
 			}
 			tnode = cur;
 			return tnode;
@@ -742,7 +742,7 @@ public:
 				const key_type& cur_key = *first;
 				node_ptr new_node = create_trie_node();
 				new_node->parent = cur;
-				typename node_type::child_iter ci = cur->child.insert(std::make_pair(cur_key, new_node)).first;
+				typename node_type::children_iter ci = cur->children.insert(std::make_pair(cur_key, new_node)).first;
 				new_node->child_iter_of_parent = ci;
 				cur = ci->second;
 			}
@@ -772,8 +772,8 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::child_iter ci = cur->child.find(cur_key);
-				if (ci == cur->child.end())
+				typename node_type::children_iter ci = cur->children.find(cur_key);
+				if (ci == cur->children.end())
 				{
 					return std::make_pair(__insert(cur, first, last, value), true);
 				}
@@ -801,8 +801,8 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::child_iter ci = cur->child.find(cur_key);
-				if (ci == cur->child.end())
+				typename node_type::children_iter ci = cur->children.find(cur_key);
+				if (ci == cur->children.end())
 				{
 					return __insert(cur, first, last, value);
 				}
@@ -824,8 +824,8 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::child_iter ci = cur->child.find(cur_key);
-				if (ci == cur->child.end())
+				typename node_type::children_iter ci = cur->children.find(cur_key);
+				if (ci == cur->children.end())
 				{
 					return NULL;
 				}
@@ -922,24 +922,24 @@ public:
 			{
 				si.push(first);
 				const key_type& cur_key = *first;
-				typename node_type::child_iter ci = cur->child.find(cur_key);
+				typename node_type::children_iter ci = cur->children.find(cur_key);
 				// using upper_bound needs comparison in every step, so using find until ci == NULL
-				if (ci == cur->child.end())
+				if (ci == cur->children.end())
 				{
 					// find a node that
-					ci = cur->child.upper_bound(cur_key);
+					ci = cur->children.upper_bound(cur_key);
 					si.pop();
-					while (ci == cur->child.end())
+					while (ci == cur->children.end())
 					{
 						if (cur->parent == NULL)
 							return root;
 						cur = cur->parent;
-						ci = cur->child.upper_bound(*si.top());
+						ci = cur->children.upper_bound(*si.top());
 					}
 					cur = ci->second;
 					while (cur->no_value())
 					{
-						cur = cur->child.begin()->second;
+						cur = cur->children.begin()->second;
 					}
 					return cur;
 				}
@@ -971,24 +971,24 @@ public:
 			{
 				si.push(first);
 				const key_type& cur_key = *first;
-				typename node_type::child_iter ci = cur->child.find(cur_key);
+				typename node_type::children_iter ci = cur->children.find(cur_key);
 				// using upper_bound needs comparison in every step, so using find until ci == NULL
-				if (ci == cur->child.end())
+				if (ci == cur->children.end())
 				{
 					// find a node that
-					ci = cur->child.upper_bound(cur_key);
+					ci = cur->children.upper_bound(cur_key);
 					si.pop();
-					while (ci == cur->child.end())
+					while (ci == cur->children.end())
 					{
 						if (cur->parent == NULL)
 							return root;
 						cur = cur->parent;
-						ci = cur->child.upper_bound(*si.top());
+						ci = cur->children.upper_bound(*si.top());
 					}
 					cur = ci->second;
 					while (cur->no_value())
 					{
-						cur = cur->child.begin()->second;
+						cur = cur->children.begin()->second;
 					}
 					return cur;
 				}
@@ -1027,10 +1027,10 @@ public:
 
 	void erase_check_ancestor(node_ptr cur, size_type delta) // delete empty ancestors and update value_count
 	{
-		while (cur != root && cur->child.empty() && cur->no_value())
+		while (cur != root && cur->children.empty() && cur->no_value())
 		{
 			node_ptr parent = cur->parent;
-			parent->child.erase(cur->child_iter_of_parent);
+			parent->children.erase(cur->child_iter_of_parent);
 			delete_trie_node(cur);
 			cur = parent;
 		}
