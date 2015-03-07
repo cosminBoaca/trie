@@ -5,7 +5,6 @@
 #include "boost/trie/trie_multiset.hpp"
 #include "boost/trie/trie.hpp"
 #include <string>
-#include <iostream>
 
 BOOST_AUTO_TEST_SUITE(trie_multiset_test)
 
@@ -133,16 +132,13 @@ BOOST_AUTO_TEST_CASE(equal_range_test)
 
 	i = a.insert(s);
 	a.erase(i);
-	std::cout << "dd" << std::endl;
 	std::pair< ti, ti > pii = a.equal_range(s);
 	size_t count = 0;
-	std::cout << "dd" << std::endl;
 	ti first = pii.first, last = pii.second;
 	for (; first != last; ++first)
 	{
 		++count;
 	}
-	std::cout << "dd" << std::endl;
 	BOOST_CHECK_MESSAGE(count == 0, count);
 	i = a.insert(s);
 	pii = a.equal_range(s);
@@ -177,8 +173,6 @@ BOOST_AUTO_TEST_CASE(reverse_iterator_test)
 
 	size_t count = 0;
 	rti ri = a.rbegin();
-	if (ri == a.rend())
-		std::cout << "end" << std::endl;
 	for (; ri != a.rend(); ++ri)
 	{
 		++count;
@@ -210,7 +204,6 @@ BOOST_AUTO_TEST_CASE(reverse_iterator_test)
 	for (; ri != a.rend(); ++ri)
 	{
 		std::vector<char> vs((*ri).first);
-		std::cout << vs[0] << std::endl;
 		++count;
 	}
 	BOOST_CHECK_MESSAGE(count == a.size(), count);
@@ -351,9 +344,7 @@ BOOST_AUTO_TEST_CASE(erase_iterator)
 	t[s3] = 4;
 	int node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
-	std::cout << t.size() << ' ' << t.count_node() << std::endl;
 	BOOST_CHECK(t.count_node() == node_cnt);
-	std::cout << *t.begin() << std::endl;
 	boost::tries::trie_map<char, int>::iterator ti;
 	ti = t.begin();
 	t.erase(t.begin());
@@ -383,9 +374,7 @@ BOOST_AUTO_TEST_CASE(erase_key)
 	t[s3] = 4;
 	int node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
-	std::cout << t.size() << ' ' << t.count_node() << std::endl;
 	BOOST_CHECK(t.count_node() == node_cnt);
-	std::cout << *t.begin() << std::endl;
 	boost::tries::trie_map<char, int>::iterator ti;
 	ti = t.begin();
 	t.erase(s);
@@ -420,49 +409,39 @@ BOOST_AUTO_TEST_CASE(find_prefix)
 	t[s3] = 4;
 	tci::iterator_range r = t.find_prefix(std::string("a"));
 	// the statement is tested when I know r.second != t.end()
-	std::cout << *r.first << " " << *r.second << std::endl;
 	BOOST_CHECK(*r.second == 4);
 	int j = 1;
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << *i << std::endl;
 		BOOST_CHECK(*i == j);
 		++j;
 	}
 	r = t.find_prefix(std::string("aa"));
-	std::cout << *r.first << " " << *r.second << std::endl;
 	BOOST_CHECK(*r.second == 4);
 	j = 1;
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << *i << std::endl;
 		BOOST_CHECK(*i == j);
 		++j;
 	}
 	r = t.find_prefix(std::string("aaa"));
-	std::cout << *r.first << " " << *r.second << std::endl;
 	BOOST_CHECK(*r.second == 3);
 	j = 1;
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << *i << std::endl;
 		BOOST_CHECK(*i == j);
 		++j;
 	}
 	r = t.find_prefix(std::string("b"));
-	//std::cout << *r.first << " " << *r.second << std::endl;
 	BOOST_CHECK(r.second == t.end());
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << *i << std::endl;
 		BOOST_CHECK(*i == 4);
 	}
 	r = t.find_prefix(std::string("bbbbb"));
-	//std::cout << *r.first << " " << *r.second << std::endl;
 	BOOST_CHECK(r.second == t.end());
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << *i << std::endl;
 		BOOST_CHECK(*i == 1);
 	}
 }

@@ -19,9 +19,9 @@ project
  <testing.launcher>valgrind
  ;
 
-run test_set.cpp ;
-run test_map.cpp ;
-run test_multiset.cpp ;
-run test_multimap.cpp ;
-run test_custom_type.cpp ;
-run test_antony.cpp ;
+run set.cpp ;
+run map.cpp ;
+run multiset.cpp ;
+run multimap.cpp ;
+run custom_type.cpp ;
+run antony.cpp ;

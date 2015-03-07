@@ -2,8 +2,8 @@
 #include <boost/test/unit_test.hpp>
 #include "boost/trie/trie.hpp"
 #include "boost/trie/trie_map.hpp"
+
 #include <string>
-#include <iostream>
 
 BOOST_AUTO_TEST_SUITE(trie_test)
 
@@ -58,29 +58,23 @@ vm s5(ms4, ms4 + 2);
 BOOST_AUTO_TEST_CASE(operator_test)
 {
 	tmm t;
-	std::cout << t.count_node() + 100 << std::endl;
 	vm s;
 	s.push_back(mytype(1));
 	s.push_back(mytype(2));
 	s.push_back(mytype(3));
 	vm s2;
 	s2.push_back(mytype(2));
-	std::cout << t.count_node() + 100 << std::endl;
 	t[s] = 1;
-	std::cout << t.count_node() + 100 << std::endl;
 	BOOST_CHECK(t[s] == 1);
 	t[s] = 5;
-	std::cout << t.count_node() << std::endl;
 	BOOST_CHECK(t[s] == mytype(5));
 	t[s2] = t[s];
-	std::cout << t.count_node() << std::endl;
 	BOOST_CHECK(t.count_node() == 4);
 	BOOST_CHECK(t[s] == t[s2]);
 	BOOST_CHECK(t.count_node() == 4);
 	BOOST_CHECK((*t.begin()).second == mytype(5));
 	BOOST_CHECK(t.size() == 2);
 	BOOST_CHECK(t.count_node() == 4);
-	std::cout << t.count_node() << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE(insert_and_find_test)
@@ -108,12 +102,9 @@ BOOST_AUTO_TEST_CASE(copy_test)
 	tmm t, t2;
 	t[s] = 1; t[s1] = 2; t[s2] = 3; t[s3] = 4;
 	t2 = t;
-	std::cout <<t[s] <<std::endl;
 	size_t node_cnt = 4 + 2 + 4;
 	BOOST_CHECK(t2.size() == 4);
 	BOOST_CHECK(t2.count_node() == node_cnt);
-	std::cout <<t[s] <<std::endl;
-	std::cout << t2[s] << std::endl;
 	BOOST_CHECK(t2[s] == 1);
 	BOOST_CHECK(t2[s1] == 2);
 	BOOST_CHECK(t2[s2] == 3);
@@ -134,14 +125,11 @@ BOOST_AUTO_TEST_CASE(iterator_operator_plus)
 	tmm t;
 	BOOST_CHECK(t.empty() == true);
 	BOOST_CHECK(t.size() == 0);
-	std::cout <<"ddd" <<std::endl;
 	BOOST_CHECK(t.begin() == t.end());
-	std::cout <<"ddd" <<std::endl;
 	t[s] = 1;
 	t[s1] = 2;
 	t[s2] = 3;
 	BOOST_CHECK(t.begin() != t.end());
-	std::cout <<"ddd" <<std::endl;
 	tmm::iterator ti;
 	ti = t.begin();
 	BOOST_CHECK((*ti).second == 1);
@@ -228,7 +216,6 @@ BOOST_AUTO_TEST_CASE(erase_iterator)
 	t.erase(t.begin());
 	ti = t.begin();
 	BOOST_CHECK(t.size() == 3);
-	//std::cout << t.count_node() << std::endl;
 	BOOST_CHECK(t.count_node() == node_cnt);
 	BOOST_CHECK((*ti).second == 3);
 	t.erase(ti);

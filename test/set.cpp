@@ -6,7 +6,6 @@
 #include "boost/trie/trie.hpp"
 
 #include <string>
-#include <iostream>
 
 BOOST_AUTO_TEST_SUITE(trie_test)
 

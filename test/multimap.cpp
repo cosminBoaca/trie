@@ -2,11 +2,10 @@
 #include <boost/test/unit_test.hpp>
 #include "boost/trie/trie_multimap.hpp"
 // multi include test
-#include "boost/trie/trie_multimap.hpp" 
+#include "boost/trie/trie_multimap.hpp"
 #include "boost/trie/trie.hpp"
 
 #include <string>
-#include <iostream>
 
 BOOST_AUTO_TEST_SUITE(trie_test)
 
@@ -90,23 +89,18 @@ BOOST_AUTO_TEST_CASE(iterator_operator_plus)
 	t[s2] = 3;
 	BOOST_CHECK(t.begin() != t.end());
 	boost::tries::trie_multimap<char, int>::iterator ti;
-	std::cout << "dfd" << std::endl;
 	ti = t.begin();
 	BOOST_CHECK((*ti).second == 1);
-	std::cout << "dfd" << std::endl;
 	++ti;
 	BOOST_CHECK((*ti).second == 2);
-	std::cout << "dfd" << std::endl;
 	BOOST_CHECK(t[s2] == 3);
 	++ti;
 	BOOST_CHECK((*ti).second == 3);
-	std::cout << "dfd" << std::endl;
 	++ti;
 	BOOST_CHECK(ti == t.end());
 	// test ++end()
 	++ti;
 	BOOST_CHECK(ti == t.end());
-	std::cout << "dfd" << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE(iterator_operator_minus)
@@ -172,9 +166,7 @@ BOOST_AUTO_TEST_CASE(erase_iterator)
 	t[s3] = 4;
 	int node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
-	std::cout << t.size() << ' ' << t.count_node() << std::endl;
 	BOOST_CHECK(t.count_node() == node_cnt);
-	std::cout << (*t.begin()).second << std::endl;
 	boost::tries::trie_multimap<char, int>::iterator ti;
 	ti = t.begin();
 	t.erase(t.begin());
@@ -204,9 +196,7 @@ BOOST_AUTO_TEST_CASE(erase_key)
 	t[s3] = 4;
 	int node_cnt = t.count_node();
 	BOOST_CHECK(t.size() == 4);
-	std::cout << t.size() << ' ' << t.count_node() << std::endl;
 	BOOST_CHECK(t.count_node() == node_cnt);
-	std::cout << (*t.begin()).second << std::endl;
 	boost::tries::trie_multimap<char, int>::iterator ti;
 	ti = t.begin();
 	t.erase(s);
@@ -241,49 +231,39 @@ BOOST_AUTO_TEST_CASE(find_prefix)
 	t[s3] = 4;
 	tci::iterator_range r = t.find_prefix(std::string("a"));
 	// the statement is tested when I know r.second != t.end()
-	std::cout << (*r.first).second << " " << (*r.second).second << std::endl;
 	BOOST_CHECK((*r.second).second == 4);
 	int j = 1;
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << (*i).second << std::endl;
 		BOOST_CHECK((*i).second == j);
 		++j;
 	}
 	r = t.find_prefix(std::string("aa"));
-	std::cout << (*r.first).second << " " << (*r.second).second << std::endl;
 	BOOST_CHECK((*r.second).second == 4);
 	j = 1;
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << (*i).second << std::endl;
 		BOOST_CHECK((*i).second == j);
 		++j;
 	}
 	r = t.find_prefix(std::string("aaa"));
-	std::cout << (*r.first).second << " " << (*r.second).second << std::endl;
 	BOOST_CHECK((*r.second).second == 3);
 	j = 1;
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << (*i).second << std::endl;
 		BOOST_CHECK((*i).second == j);
 		++j;
 	}
 	r = t.find_prefix(std::string("b"));
-	//std::cout << (*r.first).second << " " << (*r.second).second << std::endl;
 	BOOST_CHECK(r.second == t.end());
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << (*i).second << std::endl;
 		BOOST_CHECK((*i).second == 4);
 	}
 	r = t.find_prefix(std::string("bbbbb"));
-	//std::cout << (*r.first).second << " " << (*r.second).second << std::endl;
 	BOOST_CHECK(r.second == t.end());
 	for (tci::iterator i = r.first; i != r.second; ++i)
 	{
-		std::cout << (*i).second << std::endl;
 		BOOST_CHECK((*i).second == 1);
 	}
 }

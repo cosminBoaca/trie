@@ -2,8 +2,8 @@
 #include <boost/test/unit_test.hpp>
 #include "boost/trie/trie.hpp"
 #include "boost/trie/trie_map.hpp"
+
 #include <string>
-#include <iostream>
 #include <map>
 
 BOOST_AUTO_TEST_SUITE(trie_test__mentor_antony)
@@ -18,7 +18,6 @@ class no_default_constructor_type {
     explicit no_default_constructor_type(int /*i*/){}
 };
 
-//@ Does not compile. However it MUST!
 BOOST_AUTO_TEST_CASE(no_default_constructor_key)
 {
 	std::map<no_default_constructor_type, int> t;
@@ -79,9 +78,7 @@ BOOST_AUTO_TEST_CASE(counting_constructions_and_destructions_key)
     BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size);
 
     boost::tries::trie_map<counter_type, int> t;
-	std::cout << counter_type::counts_alive() << std::endl;
     t.insert(data, 0);
-	std::cout << counter_type::counts_alive() << std::endl;
     BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2);
 
     t.insert(data, 0);
@@ -91,8 +88,6 @@ BOOST_AUTO_TEST_CASE(counting_constructions_and_destructions_key)
     BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2);
 
     t.insert(data.begin() + 1, data.end(), 0);
-    //BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 3 - 1);
-	//the following statement is the correct one
     BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 3 - 2);
 
     t.clear();
@@ -102,7 +97,6 @@ BOOST_AUTO_TEST_CASE(counting_constructions_and_destructions_key)
 BOOST_AUTO_TEST_CASE(counting_alive_equal_keys)
 {
     counter_type::reset();
-    // Inserting 25 elements with value 0
     std::vector<counter_type> data(25,counter_type(0));
     const int data_size = static_cast<int>(data.size());
 
