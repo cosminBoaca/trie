@@ -53,7 +53,6 @@ struct value_list_node : public list_node_base {
 
 template <typename Key, typename Value>
 struct trie_node : private boost::noncopyable {
-//protected:
 	typedef Key key_type;
 	typedef Value value_type;
 	typedef value_type * value_ptr;
@@ -62,29 +61,18 @@ struct trie_node : private boost::noncopyable {
 	typedef node_type* node_ptr;
 	typedef value_list_node<key_type, value_type> value_list_type;
 	typedef value_list_type * value_list_ptr;
-	// maybe the pointer container of children could be defined by user?!
 	typedef std::map<key_type, node_ptr> children_type;
-
 	typedef typename children_type::iterator children_iter;
 
 	children_type children;
-
-//public:
 	node_ptr parent;
 	// store the iterator to optimize operator++ and operator--
 	// utilize that the iterator in map does not change after insertion
 	children_iter child_iter_of_parent;
-
-	// it is used for something like count_prefix
-	//size_type node_count;
 	size_type value_count;
 	size_type self_value_count;
-	//value_ptr value;
 	value_list_ptr value_list_header;
 	value_list_ptr value_list_tail;
-
-//	value_list_ptr leftmost_value_node;
-//	value_list_ptr rightmost_value_node;
 
 	node_ptr pred_node;
 	node_ptr next_node;
@@ -134,7 +122,6 @@ struct trie_node : private boost::noncopyable {
 			this->value_list_header->pred = vn;
 		}
 		else {
-			// empty list
 			this->value_list_tail = vn;
 		}
 		this->value_list_header = vn;
@@ -158,35 +145,20 @@ struct trie_node : private boost::noncopyable {
 
 template <typename Key>
 struct trie_node<Key, void> : private boost::noncopyable {
-//protected:
 	typedef Key key_type;
 	typedef void value_type;
 	typedef value_type * value_ptr;
 	typedef size_t size_type;
 	typedef trie_node<key_type, value_type> node_type;
 	typedef node_type* node_ptr;
-	// maybe the pointer container of children could be defined by user?!
 	typedef std::map<key_type, node_ptr> children_type;
-
 	typedef typename children_type::iterator children_iter;
 
 	children_type children;
-
-//public:
 	node_ptr parent;
-	// store the iterator to optimize operator++ and operator--
-	// utilize that the iterator in map does not change after insertion
 	children_iter child_iter_of_parent;
-
-	// it is used for something like count_prefix
-	//size_type node_count;
 	size_type value_count;
-	//value_ptr value;
 	bool key_ends_here;
-
-//	value_list_ptr leftmost_value_node;
-//	value_list_ptr rightmost_value_node;
-
 	node_ptr pred_node;
 	node_ptr next_node;
 

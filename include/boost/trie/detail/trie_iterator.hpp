@@ -11,7 +11,7 @@
 #include <boost/blank.hpp>
 
 namespace boost {  namespace tries {
-	
+
 namespace detail {
 
 template<typename Key, typename Value, typename Enable = void>
@@ -60,11 +60,6 @@ public:
 	{
 	}
 
-	/*
-	 *
-	 * a function returns the key on the path should be invented
-	 *
-	 */
 	std::vector<key_type> get_key() const
 	{
 		std::vector<key_type> key_path;
@@ -80,29 +75,6 @@ public:
 		}
 		return key_path;
 	}
-
-	/*
-	 * should have a version that copy the path to a parameter
-	std::list<key_type> get_key()
-	{
-		std::list<key_type> key_path;
-		trie_node_ptr cur = tnode;
-		while (cur->parent != NULL)
-		{
-			key_path.push_front(cur->key_elem());
-			cur = cur->parent;
-		}
-		return key_path;
-	}
-	*/
-
-	/*
-	template<typename Container>
-	Container<key_type> get_key(Container<key_type>& container)
-	{
-
-	}
-	*/
 
 	reference operator*() const
 	{
@@ -179,7 +151,7 @@ public:
 		 if (vp->next) {
 			 vp->next->pred = vp->pred;
 		 } else {
-			trie_node->value_list_tail = static_cast<value_node_ptr>(vp->pred); 
+			trie_node->value_list_tail = static_cast<value_node_ptr>(vp->pred);
 		 }
 		 delete vp;
 		 return false;
@@ -188,7 +160,6 @@ public:
 	self& operator++()
 	{
 		increment();
-		// increment
 		return *this;
 	}
 
@@ -196,13 +167,11 @@ public:
 	{
 		self tmp = *this;
 		tmp.increment();
-		// increment
 		return tmp;
 	}
 
 	self& operator--()
 	{
-		// decrement
 		decrement();
 		return *this;
 	}
@@ -248,11 +217,6 @@ public:
 	{
 	}
 
-	/*
-	 *
-	 * a function returns the key on the path should be invented
-	 *
-	 */
 	std::vector<key_type> get_key() const
 	{
 		std::vector<key_type> key_path;
@@ -307,7 +271,7 @@ public:
 
 	void trie_node_decrement()
 	{
-		// a begin iterator
+		// at iterator begin
 		if (tnode->pred_node->parent == NULL)
 			return;
 		tnode = tnode->pred_node;
@@ -316,7 +280,6 @@ public:
 	self& operator++()
 	{
 		trie_node_increment();
-		// increment
 		return *this;
 	}
 
@@ -324,13 +287,11 @@ public:
 	{
 		self tmp = *this;
 		tmp.trie_node_increment();
-		// increment
 		return tmp;
 	}
 
 	self& operator--()
 	{
-		// decrement
 		trie_node_decrement();
 		return *this;
 	}
