@@ -18,10 +18,6 @@ tags
 *.exe
 makefile
 
-*.*~
-*.txt
 
-
-libs/
 libs/
 build/
