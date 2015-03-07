@@ -33,119 +33,11 @@ public:
 	typedef node_type * node_ptr;
 	typedef typename detail::value_list_node<key_type, value_type> value_node_type;
 	typedef value_node_type * value_node_ptr;
-
-	//typedef std::allocator< node_type > trie_node_allocator;
-	//typedef std::allocator< value_node_type > value_allocator;
 	typedef size_t size_type;
 
 private:
-	//trie_node_allocator trie_node_alloc;
-	//value_allocator value_alloc;
-
 	node_ptr root;
 	size_type node_count; // node_count is difficult and useless to maintain on each node, so, put it on the tree
-
-	/*
-	value_node_ptr new_value_node(const non_void_value_type& x)
-	{
-		value_node_ptr v = value_alloc.allocate(1);
-		if (v == NULL)
-			return v;
-		new(v) value_node_type(x);
-		return v;
-	}
-	*/
-	
-	/*	
-	void delete_value_node(value_node_ptr p)
-	{
-		if (!p)
-			return;
-		--p->node_in_trie->self_value_count;
-		value_alloc.destroy(p);
-		value_alloc.deallocate(p, 1);
-	}
-	*/
-
-	/*
-	node_ptr get_trie_node() {
-		node_ptr new_node = trie_node_alloc.allocate(1);
-		if (new_node != NULL)
-			++node_count;
-		return new_node;
-	}
-
-	node_ptr create_trie_node()
-	{
-		node_ptr tmp = get_trie_node();
-		if (tmp != NULL)
-		{
-			new(tmp) node_type();
-		}
-		return tmp;
-	}
-
-	node_ptr create_trie_node(const value_type& value)
-	{
-		node_ptr tmp = get_trie_node();
-		if (tmp != NULL)
-		{
-			new(tmp) node_type();
-			//value_node_ptr vn = new value_node_type(value);
-			//value_list_push(tmp, vn);
-			tmp->add_value(value);
-		}
-		return tmp;
-	}
-	*/
-
-	/*
-	void value_list_push(node_ptr tmp, value_node_ptr vn)
-	{
-		vn->node_in_trie = tmp;
-		vn->next = tmp->value_list_header;
-		if (tmp->value_list_header != NULL)
-		{
-			tmp->value_list_header->pred = vn;
-		}
-		else {
-			// empty list
-			tmp->value_list_tail = vn;
-		}
-		tmp->value_list_header = vn;
-		++tmp->self_value_count;
-	}
-	
-
-	node_ptr create_trie_node(value_node_ptr vl_header)
-	{
-		node_ptr tmp = get_trie_node();
-		if (tmp != NULL)
-		{
-			new(tmp) node_type();
-			while (vl_header != NULL)
-			{
-				value_node_ptr vn = new value_node_type(vl_header->value);
-		//		value_list_push(tmp, vn);
-				tmp->add_value(vn);
-				vl_header = static_cast<value_node_ptr>(vl_header->next);
-			}
-		}
-		return tmp;
-	}
-
-	void delete_trie_node(node_ptr p)
-	{
-		if (p == NULL)
-			return;
-		//erase_value_list(p);
-		p->remove_values();
-		// actually delete the node
-		trie_node_alloc.destroy(p);
-		trie_node_alloc.deallocate(p, 1);
-		node_count--;
-	}
-	*/
 
 	// need constant time to get leftmost
 	node_ptr leftmost_node(node_ptr node) const
@@ -162,7 +54,6 @@ private:
 	{
 		node = leftmost_node(node);
 		return static_cast<value_node_ptr>(node->value_list_header);
-//		return node->leftmost_value_node;
 	}
 
 	// need constant time to get rightmost
@@ -180,28 +71,7 @@ private:
 	{
 		node = rightmost_node(node);
 		return static_cast<value_node_ptr>(node->value_list_tail);
-		//return node->rightmost_value_node;
 	}
-
-	/*
-	void update_left_and_right(node_ptr node)
-	{
-		if (node->children.empty())
-		{
-			node->leftmost_value_node = node->value_list_header;
-			node->rightmost_value_node = node->value_list_tail;
-			return;
-		}
-		if (!node->no_value())
-		{
-			node->leftmost_value_node = node->value_list_header;
-		}
-		else {
-			node->leftmost_value_node = node->children.begin()->second->leftmost_value_node;
-		}
-		node->rightmost_value_node = node->children.rbegin()->second->rightmost_value_node;
-	}
-	*/
 
 	// copy the whole trie tree
 	void copy_tree(node_ptr other_root)
@@ -225,9 +95,6 @@ private:
 			node_ptr self_cur = self_node_stk.top();
 			if (ci_stk.top() == other_cur->children.end())
 			{
-				//all the child nodes of self_cur have been copied, update leftmost and rightmost value_node of the self_cur
-				//update_left_and_right(self_cur);
-
 				other_node_stk.pop();
 				ci_stk.pop();
 				self_node_stk.pop();
@@ -238,17 +105,6 @@ private:
 				if (new_node != NULL)
 					node_count++;
 				new_node->copy_values_from(*c);
-				/*
-				if (!c->no_value())
-				{
-					new_node = create_trie_node(c->value_list_header);
-				}
-				else {
-					new_node = create_trie_node();
-				}
-				new_node->self_value_count = c->self_value_count;
-				new_node->value_count = c->value_count;
-				*/
 				new_node->parent = self_cur;
 				new_node->child_iter_of_parent = self_cur->children.insert(std::make_pair(ci_stk.top()->first, new_node)).first;
 				if (!new_node->no_value())
@@ -261,8 +117,6 @@ private:
 			}
 		}
 		root->copy_values_from(*other_root);
-		//root->value_count = other_root->value_count;
-		//root->self_value_count = other_root->self_value_count;
 	}
 
 	node_ptr next_node_with_value(node_ptr tnode)
@@ -300,52 +154,6 @@ private:
 		}
 		return tnode;
 	}
-
-	/*
-	node_ptr pred_node_with_value(node_ptr tnode)
-	{
-		node_ptr cur = tnode;
-		// handle the decrement of end()
-		if (cur->parent == NULL)
-		{
-			while (!cur->children.empty())
-			{
-				cur = cur->children.rbegin()->second;
-			}
-			tnode = cur;
-			return tnode;
-		}
-		node_ptr p = cur->parent;
-		typename node_type::children_iter ci = cur->child_iter_of_parent;
-		while (p != NULL && ci == p->children.begin() && p->no_value())
-		{
-			cur = p;
-			p = cur->parent;
-			ci = cur->child_iter_of_parent;
-		}
-		// p is root, that means the iterator is begin(), so do not change it
-		if (p == NULL)
-		{
-			//tnode = cur;
-			return tnode;
-		}
-		// go down the trie
-		if (ci != p->children.begin())
-		{
-			--ci;
-			cur = ci->second;
-			while (!cur->children.empty())
-			{
-				cur = cur->children.rbegin()->second;
-			}
-			tnode = cur;
-			return tnode;
-		}
-		// to parent which p->no_value == true
-		tnode = p;
-		return tnode;
-	}
-	*/
 
 	void link_node(node_ptr cur)
 	{
@@ -467,7 +275,6 @@ public:
 				cur = ci->second;
 			}
 			// insert the new value node into value_list
-			//value_list_push(cur, vn);
 			cur->add_value(value);
 
 			if (cur->next_node == 0 || cur->pred_node == 0)
@@ -477,7 +284,6 @@ public:
 			node_ptr tmp = cur;
 			while (tmp != NULL) // until root
 			{
-				//update_left_and_right(tmp);
 				++tmp->value_count;
 				tmp = tmp->parent;
 			}
@@ -721,10 +527,8 @@ public:
 			}
 			// if find a full match, then increment it
 			iterator tmp(cur);
-			//++tmp;
 			tmp.trie_node_increment();
 			cur = tmp.tnode;
-
 			return cur;
 		}
 
@@ -813,7 +617,6 @@ public:
 		// update value_count on each ancestral node
 		while (cur != NULL)
 		{
-			//update_left_and_right(cur);
 			cur->value_count -= delta;
 			cur = cur->parent;
 		}
@@ -828,7 +631,6 @@ public:
 			return ret;
 		ret = node->count();
 		node_ptr cur = node;
-		//erase_value_list(cur);
 		cur->remove_values();
 		unlink_node(cur);
 
@@ -850,30 +652,6 @@ public:
 		} else {
 			erase_check_ancestor(it.tnode, 1);
 		}
-		/*
-		if (vp->next == NULL && vp->pred == NULL)
-		{
-			erase_node(cur);
-		} else {
-			if (vp->pred)
-			{
-				vp->pred->next = vp->next;
-			}
-			else { // is value_list_header
-				cur->value_list_header = static_cast<value_node_ptr>(vp->next);
-			}
-			if (vp->next)
-			{
-				vp->next->pred = vp->pred;
-			}
-			else { // is value_list_tail
-				cur->value_list_tail = static_cast<value_node_ptr>(vp->pred);
-			}
-			//delete_value_node(vp);
-			delete vp;
-			erase_check_ancestor(cur, 1);
-		}
-		*/
 		return ret;
 	}
 
@@ -915,7 +693,6 @@ public:
 			erase(first);
 	}
 
-
 	// erase all subsequences with prefix
 	template<typename Iter>
 		size_type erase_prefix(Iter first, Iter last)
@@ -931,13 +708,6 @@ public:
 		{
 			return erase_prefix(container.begin(), container.end());
 		}
-
-	//
-	// there could be two functions of erase_prefix(), one deletes nodes including the node itself, the other deletes only its children
-	//
-
-
-
 
 	void clear(node_ptr node)
 	{

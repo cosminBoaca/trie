@@ -21,8 +21,6 @@ public:
 	typedef typename trie_type::const_iterator const_iterator;
 	typedef typename trie_type::const_reverse_iterator reverse_iterator;
 	typedef typename trie_type::const_reverse_iterator const_reverse_iterator;
-	//typedef typename trie_type::pair_iterator_bool pair_iterator_bool;
-	//the iterator type is different, so the above code does not compile correctly
 	typedef typename trie_type::iterator_range iterator_range;
 	typedef size_t size_type;
 

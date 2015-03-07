@@ -187,4 +187,4 @@ BOOST_AUTO_TEST_CASE(iterator_operator_minus)
 	BOOST_CHECK(riter == t.rbegin());
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END()
