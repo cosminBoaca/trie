@@ -2,7 +2,7 @@
 #include <boost/test/unit_test.hpp>
 #include "boost/trie/trie_set.hpp"
 // multi include test
-#include "boost/trie/trie_set.hpp" 
+#include "boost/trie/trie_set.hpp"
 #include "boost/trie/trie.hpp"
 
 #include <string>
