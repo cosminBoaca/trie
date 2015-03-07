@@ -190,7 +190,7 @@ struct trie_node<Key, void> : private boost::noncopyable {
 	node_ptr pred_node;
 	node_ptr next_node;
 
-	explicit trie_node() : parent(0), value_count(0), pred_node(0), next_node(0)
+	explicit trie_node() : parent(0), value_count(0), pred_node(0), next_node(0), key_ends_here(false)
 	{
 	}
 
@@ -211,6 +211,11 @@ struct trie_node<Key, void> : private boost::noncopyable {
 
 	void remove_values() {
 		key_ends_here = false;
+	}
+
+	void copy_values_from(const node_type& other) {
+		key_ends_here = other.key_ends_here;
+		value_count = other.value_count;
 	}
 };
 
