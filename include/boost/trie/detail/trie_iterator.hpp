@@ -192,10 +192,10 @@ public:
 		return *this;
 	}
 
-	self operator++(int)
+	self operator++(int) const
 	{
 		self tmp = *this;
-		increment();
+		tmp.increment();
 		// increment
 		return tmp;
 	}
@@ -206,10 +206,11 @@ public:
 		decrement();
 		return *this;
 	}
-	self operator--(int)
+
+	self operator--(int) const
 	{
 		self tmp = *this;
-		decrement();
+		tmp.decrement();
 		return tmp;
 	}
 };
@@ -221,11 +222,11 @@ struct trie_iterator<Key, Value,
 	typedef std::bidirectional_iterator_tag iterator_category;
 	typedef Key key_type;
 	typedef std::vector<key_type> value_type;
-	typedef const std::vector<key_type>& reference;
+	typedef std::vector<key_type> reference;
 	typedef std::vector<key_type>* pointer;
 	typedef ptrdiff_t difference_type;
 	typedef trie_iterator<Key, void> iterator;
-	typedef trie_iterator<Key, void> iter_type;
+	typedef trie_iterator<Key, Value> iter_type;
 	typedef iter_type self;
 	typedef trie_iterator<Key,const void> const_iterator;
 	typedef trie_node<Key, void> trie_node_type;
@@ -319,10 +320,10 @@ public:
 		return *this;
 	}
 
-	self operator++(int)
+	self operator++(int) const
 	{
 		self tmp = *this;
-		trie_node_increment();
+		tmp.trie_node_increment();
 		// increment
 		return tmp;
 	}
@@ -334,10 +335,10 @@ public:
 		return *this;
 	}
 
-	self operator--(int)
+	self operator--(int) const
 	{
 		self tmp = *this;
-		trie_node_decrement();
+		tmp.trie_node_decrement();
 		return tmp;
 	}
 };
