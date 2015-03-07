@@ -509,6 +509,7 @@ public:
 			{
 				const key_type& cur_key = *first;
 				node_ptr new_node = new node_type();
+				node_count++;
 				new_node->parent = cur;
 				typename node_type::children_iter ci = cur->children.insert(std::make_pair(cur_key, new_node)).first;
 				new_node->child_iter_of_parent = ci;
