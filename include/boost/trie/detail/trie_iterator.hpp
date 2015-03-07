@@ -7,12 +7,14 @@
 
 #include <boost/trie/detail/trie_node.hpp>
 #include <boost/type_traits/remove_const.hpp>
+#include <boost/utility/enable_if.hpp>
+#include <boost/blank.hpp>
 
 namespace boost {  namespace tries {
 	
 namespace detail {
 
-template<typename Key, typename Value>
+template<typename Key, typename Value, typename Enable = void>
 struct trie_iterator
 {
 	typedef std::bidirectional_iterator_tag iterator_category;
@@ -160,6 +162,29 @@ public:
 		vnode = tnode->value_list_tail;
 	}
 
+	/*
+	   Delegate erasure of iterator to iterator instead of trie
+	   in order to handle specializations that do not have a value list
+	*/
+	bool __erase_self_value_node() {
+		value_node_ptr vp = this->vnode;
+		trie_node_ptr trie_node = this->tnode;
+		if (vp->next == NULL && vp->pred == NULL)
+			return true;
+		 if (vp->pred) {
+			 vp->pred->next = vp->next;
+		 } else {
+			 trie_node->value_list_header = static_cast<value_node_ptr>(vp->next);
+		 }
+		 if (vp->next) {
+			 vp->next->pred = vp->pred;
+		 } else {
+			trie_node->value_list_tail = static_cast<value_node_ptr>(vp->pred); 
+		 }
+		 delete vp;
+		 return false;
+	}
+
 	self& operator++()
 	{
 		increment();
@@ -189,8 +214,9 @@ public:
 	}
 };
 
-template<class Key>
-struct trie_iterator<Key, void>
+template<typename Key, typename Value>
+struct trie_iterator<Key, Value,
+	typename boost::enable_if<boost::is_same<typename boost::remove_const<Value>::type, void> >::type>
 {
 	typedef std::bidirectional_iterator_tag iterator_category;
 	typedef Key key_type;
@@ -201,7 +227,7 @@ struct trie_iterator<Key, void>
 	typedef trie_iterator<Key, void> iterator;
 	typedef trie_iterator<Key, void> iter_type;
 	typedef iter_type self;
-	typedef trie_iterator<Key, const void> const_iterator;
+	typedef trie_iterator<Key,const void> const_iterator;
 	typedef trie_node<Key, void> trie_node_type;
 	typedef trie_node_type* trie_node_ptr;
 	typedef size_t size_type;
@@ -240,6 +266,14 @@ public:
 			path_length--;
 		}
 		return key_path;
+	}
+
+	/*
+	   This iterator doesn't have any value node. If erase it's called on it
+	   the coresponding node in trie should be removed too
+	*/
+	bool __erase_self_value_node() {
+		return true;
 	}
 
 	reference operator*() const
@@ -299,6 +333,7 @@ public:
 		trie_node_decrement();
 		return *this;
 	}
+
 	self operator--(int)
 	{
 		self tmp = *this;

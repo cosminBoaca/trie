@@ -111,12 +111,12 @@ struct trie_node : private boost::noncopyable {
 	}
 
 	void remove_values() {
-		value_node_ptr vp = value_list_header;
+		value_list_ptr vp = value_list_header;
 		if (!no_value())
 		{
 			while (vp != NULL)
 			{
-				value_node_ptr tmp = static_cast<value_node_ptr>(vp->next);
+				value_list_ptr tmp = static_cast<value_list_ptr>(vp->next);
 				delete vp;
 				vp = tmp;
 			}
@@ -125,7 +125,8 @@ struct trie_node : private boost::noncopyable {
 		value_list_header = value_list_tail = NULL;
 	}
 
-	void add_value(value_node_ptr vn) {
+	void add_value(const value_type& value) {
+		value_list_ptr vn = new value_list_type(value);
 		vn->node_in_trie = this;
 		vn->next = this->value_list_header;
 		if (this->value_list_header != NULL)
@@ -138,6 +139,20 @@ struct trie_node : private boost::noncopyable {
 		}
 		this->value_list_header = vn;
 		++this->self_value_count;
+	}
+
+	void copy_values_from(const node_type& other) {
+		value_list_ptr vp = other.value_list_header;
+		while (vp != NULL) {
+			this->add_value(vp->value);
+			vp = static_cast<value_list_ptr>(vp->next);
+		}
+		self_value_count = other.self_value_count;
+		value_count = other.value_count;
+	}
+
+	~trie_node() {
+		remove_values();
 	}
 };
 
@@ -194,8 +209,8 @@ struct trie_node<Key, void> : private boost::noncopyable {
 		return !key_ends_here;
 	}
 
-	void add_value() {
-
+	void remove_values() {
+		key_ends_here = false;
 	}
 };
 

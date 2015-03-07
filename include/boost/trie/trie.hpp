@@ -34,13 +34,13 @@ public:
 	typedef typename detail::value_list_node<key_type, value_type> value_node_type;
 	typedef value_node_type * value_node_ptr;
 
-	typedef std::allocator< node_type > trie_node_allocator;
-	typedef std::allocator< value_node_type > value_allocator;
+	//typedef std::allocator< node_type > trie_node_allocator;
+	//typedef std::allocator< value_node_type > value_allocator;
 	typedef size_t size_type;
 
 private:
-	trie_node_allocator trie_node_alloc;
-	value_allocator value_alloc;
+	//trie_node_allocator trie_node_alloc;
+	//value_allocator value_alloc;
 
 	node_ptr root;
 	size_type node_count; // node_count is difficult and useless to maintain on each node, so, put it on the tree
@@ -67,6 +67,7 @@ private:
 	}
 	*/
 
+	/*
 	node_ptr get_trie_node() {
 		node_ptr new_node = trie_node_alloc.allocate(1);
 		if (new_node != NULL)
@@ -90,14 +91,14 @@ private:
 		if (tmp != NULL)
 		{
 			new(tmp) node_type();
-			value_node_ptr vn = new value_node_type(value);
+			//value_node_ptr vn = new value_node_type(value);
 			//value_list_push(tmp, vn);
-			tmp->add_value(vn);
+			tmp->add_value(value);
 		}
 		return tmp;
 	}
+	*/
 
-*
 	/*
 	void value_list_push(node_ptr tmp, value_node_ptr vn)
 	{
@@ -114,7 +115,6 @@ private:
 		tmp->value_list_header = vn;
 		++tmp->self_value_count;
 	}
-	*/
 	
 
 	node_ptr create_trie_node(value_node_ptr vl_header)
@@ -145,6 +145,7 @@ private:
 		trie_node_alloc.deallocate(p, 1);
 		node_count--;
 	}
+	*/
 
 	// need constant time to get leftmost
 	node_ptr leftmost_node(node_ptr node) const
@@ -233,7 +234,11 @@ private:
 			} else {
 				node_ptr c = ci_stk.top()->second;
 				// create new node
-				node_ptr new_node;
+				node_ptr new_node = new node_type();
+				if (new_node != NULL)
+					node_count++;
+				new_node->copy_values_from(*c);
+				/*
 				if (!c->no_value())
 				{
 					new_node = create_trie_node(c->value_list_header);
@@ -243,6 +248,7 @@ private:
 				}
 				new_node->self_value_count = c->self_value_count;
 				new_node->value_count = c->value_count;
+				*/
 				new_node->parent = self_cur;
 				new_node->child_iter_of_parent = self_cur->children.insert(std::make_pair(ci_stk.top()->first, new_node)).first;
 				if (!new_node->no_value())
@@ -254,8 +260,9 @@ private:
 				self_node_stk.push(new_node);
 			}
 		}
-		root->value_count = other_root->value_count;
-		root->self_value_count = other_root->self_value_count;
+		root->copy_values_from(*other_root);
+		//root->value_count = other_root->value_count;
+		//root->self_value_count = other_root->self_value_count;
 	}
 
 	node_ptr next_node_with_value(node_ptr tnode)
@@ -362,12 +369,12 @@ private:
 public:
 	// iterators still unavailable here
 
-	explicit trie() : trie_node_alloc(), value_alloc(), root(create_trie_node()), node_count(0)/*, value_count(0) */
+	explicit trie() : root(new node_type()), node_count(0)/*, value_count(0) */
 	{
 		root->pred_node = root->next_node = root;
 	}
 
-	explicit trie(const trie_type& t) : trie_node_alloc(), value_alloc(), root(create_trie_node()), node_count(0)/* , value_count(0) */
+	explicit trie(const trie_type& t) : root(new node_type()), node_count(0)/* , value_count(0) */
 	{
 		copy_tree(t.root);
 	}
@@ -378,7 +385,6 @@ public:
 		return *this;
 	}
 
-
 	typedef detail::trie_iterator<Key, Value> iterator;
 	typedef typename iterator::const_iterator const_iterator;
 	typedef std::reverse_iterator<iterator> reverse_iterator;
@@ -388,26 +394,17 @@ public:
 
 	iterator begin()
 	{
-		value_node_ptr vp = leftmost_value(root);
-		if (vp == NULL)
-			return root;
-		else return vp;
+		return leftmost_node(root);
 	}
 
 	const_iterator begin() const
 	{
-		value_node_ptr vp = leftmost_value(root);
-		if (vp == NULL)
-			return root;
-		else return vp;
+		return leftmost_node(root);
 	}
 
 	const_iterator cbegin() const
 	{
-		value_node_ptr vp = leftmost_value(root);
-		if (vp == NULL)
-			return root;
-		else return vp;
+		return leftmost_node(root);
 	}
 
 	iterator end()
@@ -457,21 +454,21 @@ public:
 
 	template<typename Iter>
 		iterator __insert(node_ptr cur, Iter first, Iter last,
-				const value_type& value)
+				const non_void_value_type& value)
 		{
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				node_ptr new_node = create_trie_node();
+				node_ptr new_node = new node_type();
+				node_count++;
 				new_node->parent = cur;
 				typename node_type::children_iter ci = cur->children.insert(std::make_pair(cur_key, new_node)).first;
 				new_node->child_iter_of_parent = ci;
 				cur = ci->second;
 			}
 			// insert the new value node into value_list
-			value_node_ptr vn = new value_node_type(value);
 			//value_list_push(cur, vn);
-			cur->add_value(vn);
+			cur->add_value(value);
 
 			if (cur->next_node == 0 || cur->pred_node == 0)
 				link_node(cur);
@@ -511,7 +508,7 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				node_ptr new_node = create_trie_node();
+				node_ptr new_node = new node_type();
 				new_node->parent = cur;
 				typename node_type::children_iter ci = cur->children.insert(std::make_pair(cur_key, new_node)).first;
 				new_node->child_iter_of_parent = ci;
@@ -542,7 +539,7 @@ public:
 		}
 
 	template<typename Iter>
-		pair_iterator_bool insert_unique(Iter first, Iter last, const value_type& value)
+		pair_iterator_bool insert_unique(Iter first, Iter last, const non_void_value_type& value)
 		{
 			node_ptr cur = root;
 			for (; first != last; ++first)
@@ -564,14 +561,14 @@ public:
 		}
 
 	template<typename Container>
-		pair_iterator_bool insert_unique(const Container &container, const value_type& value)
+		pair_iterator_bool insert_unique(const Container &container, const non_void_value_type& value)
 		{
 			return insert_unique(container.begin(), container.end(), value);
 		}
 
 	template<typename Iter>
 		iterator insert_equal(Iter first, Iter last,
-				const value_type& value)
+				const non_void_value_type& value)
 		{
 			node_ptr cur = root;
 			for (; first != last; ++first)
@@ -588,7 +585,7 @@ public:
 		}
 
 	template<typename Container>
-		iterator insert_equal(const Container &container, const value_type& value)
+		iterator insert_equal(const Container &container, const non_void_value_type& value)
 		{
 			return insert_equal(container.begin(), container.end(), value);
 		}
@@ -807,7 +804,8 @@ public:
 		{
 			node_ptr parent = cur->parent;
 			parent->children.erase(cur->child_iter_of_parent);
-			delete_trie_node(cur);
+			delete cur;
+			node_count--;
 			cur = parent;
 		}
 
@@ -827,7 +825,7 @@ public:
 		size_type ret = 0;
 		if (node == NULL)
 			return ret;
-		ret = node->self_value_count;
+		ret = node->count();
 		node_ptr cur = node;
 		//erase_value_list(cur);
 		cur->remove_values();
@@ -845,8 +843,13 @@ public:
 			return it;
 		iterator ret = it;
 		++ret;
-		value_node_ptr vp = it.vnode;
-		node_ptr cur = it.tnode;
+		bool should_erase_node = it.__erase_self_value_node();
+		if (should_erase_node) {
+			erase_node(it.tnode);
+		} else {
+			erase_check_ancestor(it.tnode, 1);
+		}
+		/*
 		if (vp->next == NULL && vp->pred == NULL)
 		{
 			erase_node(cur);
@@ -869,6 +872,7 @@ public:
 			delete vp;
 			erase_check_ancestor(cur, 1);
 		}
+		*/
 		return ret;
 	}
 
@@ -934,16 +938,15 @@ public:
 
 
 
-	size_type clear(node_ptr node)
+	void clear(node_ptr node)
 	{
 		node_ptr cur = node;
-		size_type ret = cur->value_count;
-		ret -= cur->self_value_count; // do not count values on the node
 
 		node_ptr leftmost = leftmost_node(cur);
 		node_ptr rightmost = rightmost_node(cur);
+
 		if (leftmost == rightmost) // there's only one node in the sub-trie
-			return ret;
+			return;
 		// clear by iteration
 		if (leftmost == cur)
 		{
@@ -959,8 +962,6 @@ public:
 		}
 		// erase rightmost
 		erase_node(cur);
-
-		return ret;
 	}
 
 	void swap(const trie_type& t)
@@ -968,15 +969,15 @@ public:
 		// is it OK?
 		std::swap(root, t.root);
 		std::swap(t.node_count, node_count);
-		std::swap(t.value_alloc, value_alloc);
-		std::swap(t.trie_node_alloc, trie_node_alloc);
 	}
 
 	void clear(bool delete_root = false)
 	{
 		clear(root);
-		if (delete_root)
-			delete_trie_node(root);
+		if (delete_root) {
+			delete root;
+			node_count--;
+		}
 	}
 
 	size_type count_node() const {
@@ -995,7 +996,6 @@ public:
 	{
 		clear(true);
 	}
-
 };
 
 
