@@ -16,8 +16,6 @@ tags
 *.gch
 *.obj
 *.exe
-makefile
-
 
 libs/
 build/
