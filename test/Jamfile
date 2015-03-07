@@ -1,0 +1,27 @@
+# Copyright 2013 Hardy.
+# Distributed under the Boost Software License, Version 1.0. (See
+# accompanying file LICENSE_1_0.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+
+
+import testing ;
+import modules ;
+
+#using gcc ;
+#using clang ;
+
+local boost_root = [ modules.peek : BOOST_ROOT ] ;
+project
+ : requirements
+ <include>$(boost_root)
+ <include>../include/
+ <library>$(boost_root)stage/lib/libboost_unit_test_framework.a
+ <testing.launcher>valgrind
+ ;
+
+run test_set.cpp ;
+run test_map.cpp ;
+run test_multiset.cpp ;
+run test_multimap.cpp ;
+run test_custom_type.cpp ;
+run test_antony.cpp ;
