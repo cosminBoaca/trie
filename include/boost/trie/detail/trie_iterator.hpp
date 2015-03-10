@@ -46,11 +46,9 @@ public:
 	{
 	}
 
-
 	trie_iterator(value_node_ptr x) : tnode(x->node_in_trie), vnode(x)
 	{
 	}
-
 
 	explicit trie_iterator(trie_node_ptr t, value_node_ptr v) : tnode(t), vnode(v)
 	{

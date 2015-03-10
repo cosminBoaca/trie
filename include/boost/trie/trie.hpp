@@ -25,7 +25,6 @@ public:
 		boost::blank,
 		Value
 	>::type non_void_value_type;
-
 	typedef Value value_type;
 	typedef value_type* value_ptr;
 	typedef trie<key_type, Value> trie_type;
@@ -34,10 +33,28 @@ public:
 	typedef typename detail::value_list_node<key_type, value_type> value_node_type;
 	typedef value_node_type * value_node_ptr;
 	typedef size_t size_type;
+	typedef std::allocator<node_type> node_alloc_type;
+	typedef std::allocator<value_node_type> value_alloc_type;
 
 private:
+	node_alloc_type node_allocator;
+	value_alloc_type value_allocator;
+
 	node_ptr root;
 	size_type node_count; // node_count is difficult and useless to maintain on each node, so, put it on the tree
+
+	node_ptr create_trie_node()
+	{
+		node_ptr new_node = node_allocator.allocate(1);
+		return new(new_node) node_type();
+	}
+
+	void destroy_trie_node(node_ptr node)
+	{
+		node->remove_values(value_allocator);
+		node_allocator.destroy(node);
+		node_allocator.deallocate(node, 1);
+	}
 
 	// need constant time to get leftmost
 	node_ptr leftmost_node(node_ptr node) const
@@ -101,10 +118,10 @@ private:
 			} else {
 				node_ptr c = ci_stk.top()->second;
 				// create new node
-				node_ptr new_node = new node_type();
+				node_ptr new_node = create_trie_node();
 				if (new_node != NULL)
 					node_count++;
-				new_node->copy_values_from(*c);
+				new_node->copy_values_from(*c, value_allocator);
 				new_node->parent = self_cur;
 				new_node->child_iter_of_parent = self_cur->children.insert(std::make_pair(ci_stk.top()->first, new_node)).first;
 				if (!new_node->no_value())
@@ -116,7 +133,7 @@ private:
 				self_node_stk.push(new_node);
 			}
 		}
-		root->copy_values_from(*other_root);
+		root->copy_values_from(*other_root, value_allocator);
 	}
 
 	node_ptr next_node_with_value(node_ptr tnode)
@@ -177,12 +194,16 @@ private:
 public:
 	// iterators still unavailable here
 
-	explicit trie() : root(new node_type()), node_count(0)/*, value_count(0) */
+	explicit trie() : node_allocator(), value_allocator(),
+		root(create_trie_node()),
+		node_count(0)
 	{
 		root->pred_node = root->next_node = root;
 	}
 
-	explicit trie(const trie_type& t) : root(new node_type()), node_count(0)/* , value_count(0) */
+	explicit trie(const trie_type& t) : node_allocator(), value_allocator(),
+		root(create_trie_node()),
+		node_count(0)
 	{
 		copy_tree(t.root);
 	}
@@ -267,7 +288,7 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				node_ptr new_node = new node_type();
+				node_ptr new_node = create_trie_node();
 				node_count++;
 				new_node->parent = cur;
 				typename node_type::children_iter ci = cur->children.insert(std::make_pair(cur_key, new_node)).first;
@@ -275,7 +296,7 @@ public:
 				cur = ci->second;
 			}
 			// insert the new value node into value_list
-			cur->add_value(value);
+			cur->add_value(value, value_allocator);
 
 			if (cur->next_node == 0 || cur->pred_node == 0)
 				link_node(cur);
@@ -314,7 +335,7 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				node_ptr new_node = new node_type();
+				node_ptr new_node = create_trie_node();
 				node_count++;
 				new_node->parent = cur;
 				typename node_type::children_iter ci = cur->children.insert(std::make_pair(cur_key, new_node)).first;
@@ -609,7 +630,7 @@ public:
 		{
 			node_ptr parent = cur->parent;
 			parent->children.erase(cur->child_iter_of_parent);
-			delete cur;
+			destroy_trie_node(cur);
 			node_count--;
 			cur = parent;
 		}
@@ -631,11 +652,9 @@ public:
 			return ret;
 		ret = node->count();
 		node_ptr cur = node;
-		cur->remove_values();
+		cur->remove_values(value_allocator);
 		unlink_node(cur);
-
 		erase_check_ancestor(cur, ret);
-
 		return ret;
 	}
 
@@ -746,7 +765,7 @@ public:
 	{
 		clear(root);
 		if (delete_root) {
-			delete root;
+			destroy_trie_node(root);
 			node_count--;
 		}
 	}
@@ -768,7 +787,6 @@ public:
 		clear(true);
 	}
 };
-
 
 } // tries
 } // boost

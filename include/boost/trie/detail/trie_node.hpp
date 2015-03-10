@@ -98,14 +98,16 @@ struct trie_node : private boost::noncopyable {
 		return self_value_count == 0;
 	}
 
-	void remove_values() {
+	template<typename Allocator>
+	void remove_values(Allocator& alloc) {
 		value_list_ptr vp = value_list_header;
 		if (!no_value())
 		{
 			while (vp != NULL)
 			{
 				value_list_ptr tmp = static_cast<value_list_ptr>(vp->next);
-				delete vp;
+				alloc.destroy(vp);
+				alloc.deallocate(vp, 1); 
 				vp = tmp;
 			}
 		}
@@ -113,8 +115,10 @@ struct trie_node : private boost::noncopyable {
 		value_list_header = value_list_tail = NULL;
 	}
 
-	void add_value(const value_type& value) {
-		value_list_ptr vn = new value_list_type(value);
+	template<typename Allocator>
+	void add_value(const value_type& value, Allocator& alloc) {
+		value_list_ptr vn = alloc.allocate(1);
+		vn = new(vn) value_list_type(value);
 		vn->node_in_trie = this;
 		vn->next = this->value_list_header;
 		if (this->value_list_header != NULL)
@@ -128,18 +132,15 @@ struct trie_node : private boost::noncopyable {
 		++this->self_value_count;
 	}
 
-	void copy_values_from(const node_type& other) {
+	template<typename Allocator>
+	void copy_values_from(const node_type& other, Allocator& alloc) {
 		value_list_ptr vp = other.value_list_header;
 		while (vp != NULL) {
-			this->add_value(vp->value);
+			this->add_value(vp->value, alloc);
 			vp = static_cast<value_list_ptr>(vp->next);
 		}
 		self_value_count = other.self_value_count;
 		value_count = other.value_count;
-	}
-
-	~trie_node() {
-		remove_values();
 	}
 };
 
@@ -181,11 +182,13 @@ struct trie_node<Key, void> : private boost::noncopyable {
 		return !key_ends_here;
 	}
 
-	void remove_values() {
+	template<class Allocator>
+	void remove_values(Allocator&) {
 		key_ends_here = false;
 	}
 
-	void copy_values_from(const node_type& other) {
+	template<class Allocator>
+	void copy_values_from(const node_type& other, Allocator&) {
 		key_ends_here = other.key_ends_here;
 		value_count = other.value_count;
 	}
