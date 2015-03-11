@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <boost/utility.hpp>
+#include <boost/intrusive/set.hpp>
 #include <memory>
 
 namespace boost { namespace tries {
@@ -52,7 +53,9 @@ struct value_list_node : public list_node_base {
 };
 
 template <typename Key, typename Value>
-struct trie_node : private boost::noncopyable {
+struct trie_node : private boost::noncopyable,
+				   public boost::intrusive::set_base_hook<>
+{
 	typedef Key key_type;
 	typedef Value value_type;
 	typedef value_type * value_ptr;
@@ -61,14 +64,14 @@ struct trie_node : private boost::noncopyable {
 	typedef node_type* node_ptr;
 	typedef value_list_node<key_type, value_type> value_list_type;
 	typedef value_list_type * value_list_ptr;
-	typedef std::map<key_type, node_ptr> children_type;
+	typedef boost::intrusive::set<node_type> children_type;
 	typedef typename children_type::iterator children_iter;
 
+	key_type key;
 	children_type children;
 	node_ptr parent;
 	// store the iterator to optimize operator++ and operator--
 	// utilize that the iterator in map does not change after insertion
-	children_iter child_iter_of_parent;
 	size_type value_count;
 	size_type self_value_count;
 	value_list_ptr value_list_header;
@@ -83,9 +86,15 @@ struct trie_node : private boost::noncopyable {
 	{
 	}
 
+	explicit trie_node(const key_type& key) : key(key), parent(0), value_count(0), self_value_count(0),
+	value_list_header(0), value_list_tail(0),
+	pred_node(0), next_node(0)
+	{
+	}
+
 	const key_type& key_elem() const
 	{
-		return child_iter_of_parent->first;
+		return key;
 	}
 
 	size_type count() const
@@ -107,7 +116,7 @@ struct trie_node : private boost::noncopyable {
 			{
 				value_list_ptr tmp = static_cast<value_list_ptr>(vp->next);
 				alloc.destroy(vp);
-				alloc.deallocate(vp, 1); 
+				alloc.deallocate(vp, 1);
 				vp = tmp;
 			}
 		}
@@ -142,22 +151,34 @@ struct trie_node : private boost::noncopyable {
 		self_value_count = other.self_value_count;
 		value_count = other.value_count;
 	}
+
+	friend bool operator < (const node_type& a, const node_type& b) {
+		return a.key < b.key;
+	}
+	friend bool operator > (const node_type& a, const node_type& b) {
+		return a.key > b.key;
+	}
+	friend bool operator == (const node_type& a, const node_type& b) {
+		return a.key == b.key;
+	}
 };
 
 template <typename Key>
-struct trie_node<Key, void> : private boost::noncopyable {
+struct trie_node<Key, void> : private boost::noncopyable,
+							  public boost::intrusive::set_base_hook<>
+{
 	typedef Key key_type;
 	typedef void value_type;
 	typedef value_type * value_ptr;
 	typedef size_t size_type;
 	typedef trie_node<key_type, value_type> node_type;
 	typedef node_type* node_ptr;
-	typedef std::map<key_type, node_ptr> children_type;
+	typedef boost::intrusive::set<node_type> children_type;
 	typedef typename children_type::iterator children_iter;
 
+	key_type key;
 	children_type children;
 	node_ptr parent;
-	children_iter child_iter_of_parent;
 	size_type value_count;
 	bool key_ends_here;
 	node_ptr pred_node;
@@ -167,9 +188,13 @@ struct trie_node<Key, void> : private boost::noncopyable {
 	{
 	}
 
+	explicit trie_node(const key_type& key) : key(key), parent(0), value_count(0),  key_ends_here(false), pred_node(0), next_node(0)
+	{
+	}
+
 	const key_type& key_elem() const
 	{
-		return child_iter_of_parent->first;
+		return key;
 	}
 
 	size_type count() const
@@ -191,6 +216,16 @@ struct trie_node<Key, void> : private boost::noncopyable {
 	void copy_values_from(const node_type& other, Allocator&) {
 		key_ends_here = other.key_ends_here;
 		value_count = other.value_count;
+	}
+
+	friend bool operator < (const node_type& a, const node_type& b) {
+		return a.key < b.key;
+	}
+	friend bool operator > (const node_type& a, const node_type& b) {
+		return a.key > b.key;
+	}
+	friend bool operator == (const node_type& a, const node_type& b) {
+		return a.key == b.key;
 	}
 };
 

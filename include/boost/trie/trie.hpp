@@ -49,6 +49,17 @@ private:
 		return new(new_node) node_type();
 	}
 
+	node_ptr create_trie_node(const key_type& key)
+	{
+		node_ptr new_node = node_allocator.allocate(1);
+		return new(new_node) node_type(key);
+	}
+
+	const node_type& node_ref_from(const key_type& key) {
+		root->key = key;
+		return *root;
+	}
+
 	void destroy_trie_node(node_ptr node)
 	{
 		node->remove_values(value_allocator);
@@ -62,7 +73,7 @@ private:
 		node_ptr cur = node;
 		while (!cur->children.empty() && cur->no_value())
 		{
-			cur = cur->children.begin()->second;
+			cur = &(*(cur->children.begin()));
 		}
 		return cur;
 	}
@@ -79,7 +90,7 @@ private:
 		node_ptr cur = node;
 		while (!cur->children.empty())
 		{
-			cur = cur->children.rbegin()->second;
+			cur = &(*(cur->children.rbegin()));
 		}
 		return cur;
 	}
@@ -116,14 +127,14 @@ private:
 				ci_stk.pop();
 				self_node_stk.pop();
 			} else {
-				node_ptr c = ci_stk.top()->second;
+				node_ptr c = &(*ci_stk.top());
 				// create new node
-				node_ptr new_node = create_trie_node();
+				node_ptr new_node = create_trie_node(c->key);
 				if (new_node != NULL)
 					node_count++;
 				new_node->copy_values_from(*c, value_allocator);
 				new_node->parent = self_cur;
-				new_node->child_iter_of_parent = self_cur->children.insert(std::make_pair(ci_stk.top()->first, new_node)).first;
+				self_cur->children.insert(*new_node);
 				if (!new_node->no_value())
 					link_node(new_node);
 				// to next node
@@ -145,7 +156,7 @@ private:
 		if (!cur->children.empty())
 		{ // go down to the first node with a value in it, and there always be at least one
 			do {
-				cur = cur->children.begin()->second;
+				cur = &(*(cur->children.begin()));
 			} while (cur->no_value());
 			tnode = cur;
 		} else {
@@ -154,14 +165,14 @@ private:
 			while (cur->parent != NULL)
 			{
 				node_ptr p = cur->parent;
-				typename node_type::children_iter ci = cur->child_iter_of_parent;
+				typename node_type::children_iter ci = p->children.iterator_to(*cur);
 				++ci;
 				if (ci != p->children.end())
 				{
-					cur = ci->second;
+					cur = &(*ci);
 					//"change value to self_value_count
 					while (cur->no_value()) {
-						cur = cur->children.begin()->second;
+						cur = &(*(cur->children.begin()));
 					}
 					break;
 				}
@@ -288,12 +299,11 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				node_ptr new_node = create_trie_node();
+				node_ptr new_node = create_trie_node(cur_key);
 				node_count++;
 				new_node->parent = cur;
-				typename node_type::children_iter ci = cur->children.insert(std::make_pair(cur_key, new_node)).first;
-				new_node->child_iter_of_parent = ci;
-				cur = ci->second;
+				cur->children.insert(*new_node);
+				cur = new_node;
 			}
 			// insert the new value node into value_list
 			cur->add_value(value, value_allocator);
@@ -322,10 +332,10 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key);
+				typename node_type::children_iter ci = cur->children.find(node_ref_from(cur_key));
 				if (ci == cur->children.end())
 					break;
-				cur = ci->second;
+				cur = &(*ci);
 			}
 
 			if (first == last && !cur->no_value()) {
@@ -335,12 +345,11 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				node_ptr new_node = create_trie_node();
+				node_ptr new_node = create_trie_node(cur_key);
 				node_count++;
 				new_node->parent = cur;
-				typename node_type::children_iter ci = cur->children.insert(std::make_pair(cur_key, new_node)).first;
-				new_node->child_iter_of_parent = ci;
-				cur = ci->second;
+				cur->children.insert(*new_node);
+				cur = new_node;
 			}
 
 			if (cur->next_node == 0 || cur->pred_node == 0)
@@ -373,12 +382,12 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key);
+				typename node_type::children_iter ci = cur->children.find(node_ref_from(cur_key));
 				if (ci == cur->children.end())
 				{
 					return std::make_pair(__insert(cur, first, last, value), true);
 				}
-				cur = ci->second;
+				cur = &(*ci);
 			}
 			if (cur->no_value())
 			{
@@ -402,12 +411,12 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key);
+				typename node_type::children_iter ci = cur->children.find(node_ref_from(cur_key));
 				if (ci == cur->children.end())
 				{
 					return __insert(cur, first, last, value);
 				}
-				cur = ci->second;
+				cur = &(*ci);
 			}
 			return __insert(cur, first, last, value);
 		}
@@ -425,12 +434,12 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key);
+				typename node_type::children_iter ci = cur->children.find(node_ref_from(cur_key));
 				if (ci == cur->children.end())
 				{
 					return NULL;
 				}
-				cur = ci->second;
+				cur = &(*ci);
 			}
 			return cur;
 		}
@@ -523,12 +532,12 @@ public:
 			{
 				si.push(first);
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key);
+				typename node_type::children_iter ci = cur->children.find(node_ref_from(cur_key));
 				// using upper_bound needs comparison in every step, so using find until ci == NULL
 				if (ci == cur->children.end())
 				{
 					// find a node that
-					ci = cur->children.upper_bound(cur_key);
+					ci = cur->children.upper_bound(node_ref_from(cur_key));
 					si.pop();
 					while (ci == cur->children.end())
 					{
@@ -540,11 +549,11 @@ public:
 					cur = ci->second;
 					while (cur->no_value())
 					{
-						cur = cur->children.begin()->second;
+						cur = &(*(cur->children.begin()));
 					}
 					return cur;
 				}
-				cur = ci->second;
+				cur = &(*ci);
 			}
 			// if find a full match, then increment it
 			iterator tmp(cur);
@@ -587,11 +596,11 @@ public:
 					cur = ci->second;
 					while (cur->no_value())
 					{
-						cur = cur->children.begin()->second;
+						cur = &(*(cur->children.begin()));
 					}
 					return cur;
 				}
-				cur = ci->second;
+				cur = &(*ci);
 			}
 			// lower_bound() needn't increment here!!!
 			return cur;
@@ -629,7 +638,7 @@ public:
 		while (cur != root && cur->children.empty() && cur->no_value())
 		{
 			node_ptr parent = cur->parent;
-			parent->children.erase(cur->child_iter_of_parent);
+			parent->children.erase(parent->children.iterator_to(*cur));
 			destroy_trie_node(cur);
 			node_count--;
 			cur = parent;

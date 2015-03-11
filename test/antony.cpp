@@ -3,6 +3,7 @@
 #include "boost/trie/trie.hpp"
 #include "boost/trie/trie_map.hpp"
 
+#include <iostream>
 #include <string>
 #include <map>
 
@@ -74,23 +75,32 @@ BOOST_AUTO_TEST_CASE(counting_constructions_and_destructions_key)
     data.push_back(counter_type(1));
     data.push_back(counter_type(2));
     data.push_back(counter_type(3));
+    std::cout << counter_type::counts_alive() << std::endl;
+    std::cout.flush();
     const int data_size = static_cast<int>(data.size());
     BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size);
 
-    boost::tries::trie_map<counter_type, int> t;
-    t.insert(data, 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2);
+    /*
+       +1 is because all the nodes are copied / destructed in node_ref_from function
+       excepting the last one that is only copied. It is only destructed when the destructor is called
+    */
+    boost::tries::trie_map<counter_type, int> *t = new boost::tries::trie_map<counter_type, int>();
+    t->insert(data, 0);
+    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
 
-    t.insert(data, 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2);
+    t->insert(data, 0);
+    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
 
-    t.insert(data.begin(), data.end(), 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2);
+    t->insert(data.begin(), data.end(), 0);
+    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
 
-    t.insert(data.begin() + 1, data.end(), 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 3 - 2);
+    t->insert(data.begin() + 1, data.end(), 0);
+    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 3 - 1);
 
-    t.clear();
+    t->clear();
+    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size + 1);
+    delete t;
+    /* This check is performed to prove that the comment above is true */
     BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size);
 }
 
@@ -100,19 +110,23 @@ BOOST_AUTO_TEST_CASE(counting_alive_equal_keys)
     std::vector<counter_type> data(25,counter_type(0));
     const int data_size = static_cast<int>(data.size());
 
+    /*
+       See counting_constructions_and_destructions test for explanations about why
+       + 1 is required in BOOST_CHECK_EQUAL
+    */
     boost::tries::trie_map<counter_type, int> t;
     t.insert(data, 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2);
+    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
 
     t.insert(data, 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2);
+    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
 
     std::vector<counter_type>::const_iterator it = data.begin(),
             end = data.end();
     for (; it != end; ++it)
     {
         t.insert(it, end, 0);
-        BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2);
+        BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
     }
 }
 
