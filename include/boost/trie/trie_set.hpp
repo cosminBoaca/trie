@@ -15,7 +15,7 @@ class trie_set
 {
 public:
 	typedef Key key_type;
-	typedef trie<key_type, void> trie_type;
+	typedef trie<key_type, void, false> trie_type;
 	typedef trie_set<Key> trie_set_type;
 	typedef typename trie_type::const_iterator iterator;
 	typedef typename trie_type::const_iterator const_iterator;

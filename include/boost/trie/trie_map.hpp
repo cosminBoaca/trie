@@ -17,7 +17,7 @@ class trie_map
 public:
 	typedef Key key_type;
 	typedef Value value_type;
-	typedef trie<key_type, value_type> trie_type;
+	typedef trie<key_type, value_type, false> trie_type;
 	typedef trie_map<Key, Value> trie_map_type;
 	typedef typename trie_type::iterator iterator;
 	typedef typename trie_type::const_iterator const_iterator;

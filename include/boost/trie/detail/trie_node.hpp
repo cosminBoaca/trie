@@ -15,7 +15,7 @@ namespace boost { namespace tries {
 
 namespace detail {
 
-template <typename Key, typename Value>
+template <typename Key, typename Value, bool isMultiValue>
 struct trie_node;
 
 struct list_node_base : protected boost::noncopyable {
@@ -31,7 +31,7 @@ template <typename Key, typename Value>
 struct value_list_node : public list_node_base {
 	typedef Key key_type;
 	typedef Value value_type;
-	typedef trie_node<key_type, value_type> trie_node_type;
+	typedef trie_node<key_type, value_type, true> trie_node_type;
 	typedef trie_node_type * trie_node_ptr;
 	typedef value_list_node<key_type, value_type> node_type;
 	typedef node_type * node_ptr;
@@ -52,19 +52,26 @@ struct value_list_node : public list_node_base {
 	}
 };
 
+typedef boost::intrusive::link_mode<boost::intrusive::safe_link> safe_link_mode;
+typedef boost::intrusive::link_mode<boost::intrusive::normal_link> normal_link_mode;
+typedef boost::intrusive::optimize_size<true> optimized_size;
+typedef boost::intrusive::optimize_size<false> unoptimized_size;
+typedef boost::intrusive::constant_time_size<true> constant_time_size;
+typedef boost::intrusive::constant_time_size<false> not_constant_time_size;
+
 template <typename Key, typename Value>
-struct trie_node : private boost::noncopyable,
-				   public boost::intrusive::set_base_hook<>
+struct trie_node<Key, Value, true> : private boost::noncopyable,
+						 public boost::intrusive::set_base_hook<optimized_size, normal_link_mode>
 {
 	typedef Key key_type;
 	typedef Value value_type;
 	typedef value_type * value_ptr;
 	typedef size_t size_type;
-	typedef trie_node<key_type, value_type> node_type;
+	typedef trie_node<key_type, value_type, true> node_type;
 	typedef node_type* node_ptr;
 	typedef value_list_node<key_type, value_type> value_list_type;
 	typedef value_list_type * value_list_ptr;
-	typedef boost::intrusive::set<node_type> children_type;
+	typedef boost::intrusive::set<node_type, not_constant_time_size> children_type;
 	typedef typename children_type::iterator children_iter;
 
 	key_type key;
@@ -152,6 +159,107 @@ struct trie_node : private boost::noncopyable,
 		value_count = other.value_count;
 	}
 
+	struct comparator {
+		bool operator () (const node_type& a, const node_type& b) const {
+			return a.key < b.key;
+		}
+
+		bool operator () (const key_type& a, const node_type& b) const {
+			return a < b.key;
+		}
+
+		bool operator () (const node_type& a, const key_type& b) const {
+			return a.key < b;
+		}
+	};
+
+	friend bool operator < (const node_type& a, const node_type& b) {
+		return a.key < b.key;
+	}
+	friend bool operator > (const node_type& a, const node_type& b) {
+		return a.key > b.key;
+	}
+	friend bool operator == (const node_type& a, const node_type& b) {
+		return a.key == b.key;
+	}
+};
+
+template <typename Key, typename Value>
+struct trie_node<Key, Value, false> : private boost::noncopyable,
+									  public boost::intrusive::set_base_hook<optimized_size, normal_link_mode>
+{
+	typedef Key key_type;
+	typedef Value value_type;
+	typedef value_type * value_ptr;
+	typedef size_t size_type;
+	typedef trie_node<key_type, value_type, false> node_type;
+	typedef node_type* node_ptr;
+	typedef boost::intrusive::set<node_type, not_constant_time_size> children_type;
+	typedef typename children_type::iterator children_iter;
+
+	key_type key;
+	value_type value;
+	children_type children;
+	node_ptr parent;
+	size_type value_count;
+	bool has_value;
+	node_ptr pred_node;
+	node_ptr next_node;
+
+	explicit trie_node() : parent(0), value_count(0), has_value(false),
+	pred_node(0), next_node(0)
+	{
+	}
+
+	explicit trie_node(const key_type& key) : key(key), parent(0), value_count(0), has_value(false),
+	pred_node(0), next_node(0)
+	{
+	}
+
+	const key_type& key_elem() const
+	{
+		return key;
+	}
+
+	size_type count() const
+	{
+		return has_value;
+	}
+
+	bool no_value() const
+	{
+		return !has_value;
+	}
+
+	void remove_values() {
+		has_value = false;
+	}
+
+	void add_value(const value_type& value) {
+		this->value = value;
+		has_value = true;
+	}
+
+	void copy_values_from(const node_type& other) {
+		value = other.value;
+		value_count = other.value_count;
+		has_value = other.has_value;
+	}
+
+	struct comparator {
+		bool operator () (const node_type& a, const node_type& b) const {
+			return a.key < b.key;
+		}
+
+		bool operator () (const key_type& a, const node_type& b) const {
+			return a < b.key;
+		}
+
+		bool operator () (const node_type& a, const key_type& b) const {
+			return a.key < b;
+		}
+	};
+
 	friend bool operator < (const node_type& a, const node_type& b) {
 		return a.key < b.key;
 	}
@@ -164,14 +272,14 @@ struct trie_node : private boost::noncopyable,
 };
 
 template <typename Key>
-struct trie_node<Key, void> : private boost::noncopyable,
-							  public boost::intrusive::set_base_hook<>
+struct trie_node<Key, void, false> : private boost::noncopyable,
+	public boost::intrusive::set_base_hook<>
 {
 	typedef Key key_type;
 	typedef void value_type;
 	typedef value_type * value_ptr;
 	typedef size_t size_type;
-	typedef trie_node<key_type, value_type> node_type;
+	typedef trie_node<key_type, value_type, false> node_type;
 	typedef node_type* node_ptr;
 	typedef boost::intrusive::set<node_type> children_type;
 	typedef typename children_type::iterator children_iter;
@@ -207,16 +315,28 @@ struct trie_node<Key, void> : private boost::noncopyable,
 		return !key_ends_here;
 	}
 
-	template<class Allocator>
-	void remove_values(Allocator&) {
+	void remove_values() {
 		key_ends_here = false;
 	}
 
-	template<class Allocator>
-	void copy_values_from(const node_type& other, Allocator&) {
+	void copy_values_from(const node_type& other) {
 		key_ends_here = other.key_ends_here;
 		value_count = other.value_count;
 	}
+
+	struct comparator {
+		bool operator () (const node_type& a, const node_type& b) const {
+			return a.key < b.key;
+		}
+
+		bool operator () (const key_type& a, const node_type& b) const {
+			return a < b.key;
+		}
+
+		bool operator () (const node_type& a, const key_type& b) const {
+			return a.key < b;
+		}
+	};
 
 	friend bool operator < (const node_type& a, const node_type& b) {
 		return a.key < b.key;
@@ -229,6 +349,37 @@ struct trie_node<Key, void> : private boost::noncopyable,
 	}
 };
 
+template<class Node, class Allocator, bool multi_value_node>
+struct value_remove_helper {
+	void operator() (Node* node, Allocator& alloc) {
+		node->remove_values(alloc);
+	}
+	void operator() (Node* node) { }
+};
+
+template<class Node, class Allocator>
+struct value_remove_helper<Node, Allocator, false> {
+	void operator() (Node *node) {
+		node->remove_values();
+	}
+	void operator() (Node *node, Allocator& alloc) { }
+};
+
+template<class Node, class Allocator, bool multi_value_node>
+struct value_copy_helper {
+	void operator() (Node *dest, Node* source, Allocator& alloc) {
+		dest->copy_values_from(*source, alloc);
+	}
+	void operator() (Node *dest, Node* source) { }
+};
+
+template<class Node, class Allocator>
+struct value_copy_helper<Node, Allocator, false> {
+	void operator() (Node *dest, Node* source, Allocator& alloc) { }
+	void operator() (Node *dest, Node* source) { 
+		dest->copy_values_from(*source);
+	}
+};
 } /* detail */
 } /* tries */
 } /* boost */

@@ -16,7 +16,7 @@ class trie_multiset
 public:
 	typedef Key key_type;
 	typedef boost::blank value_type;
-	typedef trie<key_type, value_type> trie_type;
+	typedef trie<key_type, value_type, true> trie_type;
 	typedef trie_multiset<Key> trie_multiset_type;
 	typedef typename trie_type::const_iterator iterator;
 	typedef typename trie_type::const_iterator const_iterator;
