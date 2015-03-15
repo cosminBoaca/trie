@@ -10,12 +10,13 @@ local lib_root = $(boost_root)/stage/lib ;
 project :
 	requirements
 		<include>$(boost_root)
-		<include>/home/god/develop/Boost.Trie/
+		<include>../include
 		<library>$(lib_root)/libboost_timer.a
 		<library>$(lib_root)/libboost_chrono.a
 		<library>$(lib_root)/libboost_system.a
 		#<testing.launcher>valgrind #this makes program more than 10 times slower
-		<cxxflags>-std=gnu++0x
+		<cxxflags>-std=c++11
+		<cxxflags>-O3
 ;
 
 #run measure_trie_map.cpp ;
