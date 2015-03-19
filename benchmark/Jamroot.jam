@@ -16,7 +16,6 @@ project :
 		<library>$(lib_root)/libboost_system.a
 		#<testing.launcher>valgrind #this makes program more than 10 times slower
 		<cxxflags>-std=c++11
-		<cxxflags>-O1
 ;
 
 #run measure_trie_map.cpp ;
