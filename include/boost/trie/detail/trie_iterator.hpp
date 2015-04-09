@@ -37,6 +37,8 @@ struct trie_iterator<Key, Value, true>
 	typedef value_node_type* value_node_ptr;
 	typedef size_t size_type;
 	typedef typename trie_node_type::children_type node_children_type;
+	typedef typename node_children_type::iterator children_iterator;
+	typedef typename node_children_type::reverse_iterator children_reverse_iterator;
 
 	trie_node_ptr tnode;
 	value_node_ptr vnode;
@@ -98,42 +100,111 @@ public:
 		return tnode != other.tnode || vnode != other.vnode;
 	}
 
+	void go_up_forward() {
+		typename node_children_type::iterator it;
+		tnode = tnode->parent;
+		vnode = tnode->value_list_header;
+		while (tnode->parent != NULL) {
+			it = ++(node_children_type::s_iterator_to(*tnode));
+			if (it != tnode->parent->children.end()) {
+				tnode = &(*it);
+				if (tnode->no_value())
+					go_down_forward();
+				else
+					vnode = tnode->value_list_header;
+				break;
+			}
+			tnode = tnode->parent;
+		}
+	}
+
+	bool go_down_forward() {
+		if (tnode->children.empty())
+			return false;
+		do  {
+			tnode = &(*(tnode->children.begin()));
+		} while (!tnode->children.empty() && tnode->no_value());
+		vnode = tnode->value_list_header;
+		return true;
+	}
+
+	void go_down_backward() {
+		if (tnode->children.empty()) {
+			vnode = tnode->value_list_header;
+			return;
+		}
+		do {
+			tnode = &(*(tnode->children.rbegin()));
+		} while(!tnode->children.empty());
+		vnode = tnode->value_list_tail;
+	}
+
+	void go_up_backward() {
+		typename node_children_type::iterator it;
+		tnode = tnode->parent;
+		while (tnode->parent && tnode->no_value()) {
+			it = node_children_type::s_iterator_to(*tnode);
+			if (it != tnode->parent->children.begin()) {
+				--it;
+				tnode = &(*it);
+				go_down_backward();
+				break;
+			}
+			tnode = tnode->parent;
+		}
+		if (tnode->parent == NULL)
+			go_down_forward();
+	}
+
 	void trie_node_increment()
 	{
-		// at iterator end
 		if (tnode->parent == NULL)
 			return;
-		tnode = tnode->next_node;
+		/*
+		 *First check is usefull when iterator is used for erasure
+		 *by the clear function. In that case vnode gets invalided
+		 *and the vnode->next would generate memory error
+		 */
+		if (!tnode->no_value() && vnode->next != NULL) {
+			vnode = static_cast<value_node_ptr>(vnode->next);
+			return;
+		}
+
+		if (!go_down_forward()) {
+			typename node_children_type::iterator it =
+				++(node_children_type::s_iterator_to(*tnode));
+			if (it != tnode->parent->children.end()) {
+				tnode = &(*it);
+				if (tnode->no_value()) {
+					go_down_forward();
+				} else {
+					vnode = tnode->value_list_header;
+				}
+			} else {
+				go_up_forward();
+			}
+		}
 	}
 
 	void trie_node_decrement()
 	{
-		// a begin iterator
-		if (tnode->pred_node->parent == NULL)
-			return;
-		tnode = tnode->pred_node;
-	}
-
-	void increment()
-	{
-		if (vnode != NULL && vnode->next != NULL)
-		{
-			vnode = static_cast<value_node_ptr>(vnode->next);
-			return;
-		}
-		trie_node_increment();
-		vnode = tnode->value_list_header;
-	}
-
-	void decrement()
-	{
-		if (vnode != NULL && vnode->pred != NULL)
-		{
+		if (vnode->pred != NULL) {
 			vnode = static_cast<value_node_ptr>(vnode->pred);
 			return;
 		}
-		trie_node_decrement();
-		vnode = tnode->value_list_tail;
+
+		children_iterator it = node_children_type::s_iterator_to(*tnode);
+		if (tnode->parent) {
+			if (it != tnode->parent->children.begin()) {
+				--it;
+				tnode = &(*it);
+				go_down_backward();
+			} else {
+				go_up_backward();
+			}
+		} else {
+			go_down_backward();
+		}
 	}
 
 	/*
@@ -161,27 +232,27 @@ public:
 
 	self& operator++()
 	{
-		increment();
+		trie_node_increment();
 		return *this;
 	}
 
 	self operator++(int) const
 	{
 		self tmp = *this;
-		tmp.increment();
+		trie_node_increment();
 		return tmp;
 	}
 
 	self& operator--()
 	{
-		decrement();
+		trie_node_decrement();
 		return *this;
 	}
 
 	self operator--(int) const
 	{
 		self tmp = *this;
-		tmp.decrement();
+		trie_node_decrement();
 		return tmp;
 	}
 };
@@ -497,7 +568,6 @@ public:
 		return tmp;
 	}
 };
-
 
 } /* detail */
 } /* tries */

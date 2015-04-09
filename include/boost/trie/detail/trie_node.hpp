@@ -84,18 +84,13 @@ struct trie_node<Key, Value, true> : private boost::noncopyable,
 	value_list_ptr value_list_header;
 	value_list_ptr value_list_tail;
 
-	node_ptr pred_node;
-	node_ptr next_node;
-
 	explicit trie_node() : parent(0), value_count(0), self_value_count(0),
-	value_list_header(0), value_list_tail(0),
-	pred_node(0), next_node(0)
+	value_list_header(0), value_list_tail(0)
 	{
 	}
 
 	explicit trie_node(const key_type& key) : key(key), parent(0), value_count(0), self_value_count(0),
-	value_list_header(0), value_list_tail(0),
-	pred_node(0), next_node(0)
+	value_list_header(0), value_list_tail(0)
 	{
 	}
 
@@ -376,6 +371,7 @@ struct value_copy_helper<Node, Allocator, false> {
 		dest->copy_values_from(*source);
 	}
 };
+
 } /* detail */
 } /* tries */
 } /* boost */

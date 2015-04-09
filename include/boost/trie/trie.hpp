@@ -767,6 +767,13 @@ public:
 		}
 		for (node_ptr next; cur != rightmost; cur = next)
 		{
+			/*
+			 *This is necessary because the ++ operator on the multivalue
+			 *iterator wouldn't always modify tnode and this will result
+			 *in double free
+			 */
+			if (multi_value_node)
+				remove_values_from(it.tnode, value_allocator);
 			next = (++it).tnode;
 			erase_node(cur);
 		}
