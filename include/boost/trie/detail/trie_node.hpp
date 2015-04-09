@@ -264,7 +264,7 @@ struct trie_node<Key, Value, false> : private boost::noncopyable,
 
 template <typename Key>
 struct trie_node<Key, void, false> : private boost::noncopyable,
-	public boost::intrusive::set_base_hook<>
+	public boost::intrusive::set_base_hook<optimized_size, normal_link_mode>
 {
 	typedef Key key_type;
 	typedef void value_type;
@@ -272,7 +272,7 @@ struct trie_node<Key, void, false> : private boost::noncopyable,
 	typedef size_t size_type;
 	typedef trie_node<key_type, value_type, false> node_type;
 	typedef node_type* node_ptr;
-	typedef boost::intrusive::set<node_type> children_type;
+	typedef boost::intrusive::set<node_type, not_constant_time_size> children_type;
 	typedef typename children_type::iterator children_iter;
 
 	key_type key;
