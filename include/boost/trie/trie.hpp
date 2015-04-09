@@ -66,7 +66,7 @@ private:
 		//node->remove_values(value_allocator);
 		if (multi_value_node)
 			remove_values_from(node, value_allocator);
-		else 
+		else
 			remove_values_from(node);
 		node_allocator.destroy(node);
 		node_allocator.deallocate(node, 1);
@@ -120,7 +120,6 @@ private:
 		std::stack<typename node_type::children_iter> ci_stk;
 		other_node_stk.push(other_root);
 		self_node_stk.push(root);
-		root->pred_node = root->next_node = root;
 		ci_stk.push(other_root->children.begin());
 		for (; !other_node_stk.empty(); )
 		{
@@ -143,8 +142,6 @@ private:
 					copy_values_from(new_node, c);
 				new_node->parent = self_cur;
 				self_cur->children.insert(*new_node);
-				if (!new_node->no_value())
-					link_node(new_node);
 				// to next node
 				++ci_stk.top();
 				other_node_stk.push(c);
@@ -194,24 +191,6 @@ private:
 		return tnode;
 	}
 
-	void link_node(node_ptr cur)
-	{
-		node_ptr next = next_node_with_value(cur);
-		node_ptr pred = next->pred_node;
-		cur->next_node = next;
-		cur->pred_node = pred;
-		next->pred_node = cur;
-		pred->next_node = cur;
-	}
-
-	void unlink_node(node_ptr cur)
-	{
-		node_ptr next_node = cur->next_node;
-		node_ptr pred_node = cur->pred_node;
-		pred_node->next_node = next_node;
-		next_node->pred_node = pred_node;
-		cur->pred_node = cur->next_node = 0;
-	}
 
 public:
 	// iterators still unavailable here
@@ -220,7 +199,6 @@ public:
 		root(create_trie_node()),
 		node_count(0)
 	{
-		root->pred_node = root->next_node = root;
 	}
 
 	explicit trie(const trie_type& t) : node_allocator(), value_allocator(),
@@ -314,9 +292,6 @@ public:
 			cur->children.insert(*new_node);
 			cur = new_node;
 		}
-
-		if (cur->next_node == 0 || cur->pred_node == 0)
-			link_node(cur);
 	}
 
 	template<typename Iter>
@@ -381,8 +356,6 @@ public:
 				cur = new_node;
 			}
 
-			if (cur->next_node == 0 || cur->pred_node == 0)
-				link_node(cur);
 			cur->key_ends_here = true;
 
 			// update value_count on the path
@@ -695,9 +668,8 @@ public:
 		node_ptr cur = node;
 		if (multi_value_node)
 			remove_values_from(node, value_allocator);
-		else 
+		else
 			remove_values_from(node);
-		unlink_node(cur);
 		erase_check_ancestor(cur, ret);
 		return ret;
 	}
@@ -775,26 +747,29 @@ public:
 	void clear(node_ptr node)
 	{
 		node_ptr cur = node;
-
 		node_ptr leftmost = leftmost_node(cur);
 		node_ptr rightmost = rightmost_node(cur);
 
-		if (leftmost == rightmost) // there's only one node in the sub-trie
+		iterator it(cur);
+
+		if (cur == root)
+			it = begin();
+
+		if (leftmost == rightmost)
 			return;
-		// clear by iteration
+
 		if (leftmost == cur)
 		{
-			cur = cur->next_node;
+			cur = (++it).tnode;
 		}
 		else {
 			cur = leftmost;
 		}
 		for (node_ptr next; cur != rightmost; cur = next)
 		{
-			next = cur->next_node;
+			next = (++it).tnode;
 			erase_node(cur);
 		}
-		// erase rightmost
 		erase_node(cur);
 	}
 

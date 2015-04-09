@@ -205,6 +205,8 @@ struct trie_iterator<Key, Value, false,
 	typedef trie_node_type* trie_node_ptr;
 	typedef size_t size_type;
 	typedef typename trie_node_type::children_type node_children_type;
+	typedef typename node_children_type::iterator children_iterator;
+	typedef typename node_children_type::reverse_iterator children_reverse_iterator;
 
 	trie_node_ptr tnode;
 
@@ -265,7 +267,7 @@ public:
 		return tnode != other.tnode;
 	}
 
-	void go_up() {
+	void go_up_forward() {
 		typename node_children_type::iterator it;
 		tnode = tnode->parent;
 		while (tnode->parent != NULL) {
@@ -273,51 +275,80 @@ public:
 			if (it != tnode->parent->children.end()) {
 				tnode = &(*it);
 				if (tnode->no_value())
-					go_down();
+					go_down_forward();
 				break;
 			}
 			tnode = tnode->parent;
 		}
 	}
 
-	bool go_down() {
+	bool go_down_forward() {
 		if (tnode->children.empty())
 			return false;
 		do  {
-			tnode = &(*(tnode->children.begin()));
+				tnode = &(*(tnode->children.begin()));
 		} while (!tnode->children.empty() && tnode->no_value());
 		return true;
 	}
 
+	void go_down_backward() {
+		if (tnode->children.empty())
+			return;
+		do {
+			tnode = &(*(tnode->children.rbegin()));
+		} while(!tnode->children.empty());
+	}
+
+	void go_up_backward() {
+		typename node_children_type::iterator it;
+		tnode = tnode->parent;
+		while (tnode->parent && tnode->no_value()) {
+			it = node_children_type::s_iterator_to(*tnode);
+			if (it != tnode->parent->children.begin()) {
+				--it;
+				tnode = &(*it);
+				go_down_backward();
+				break;
+			}
+			tnode = tnode->parent;
+		}
+		if (tnode->parent == NULL)
+			go_down_forward();
+	}
+
 	void trie_node_increment()
 	{
-		// at iterator end
-		/*if (tnode->parent == NULL)
-			return;
-		tnode = tnode->next_node;*/
 		if (tnode->parent == NULL)
 			return;
 
-		if (!go_down()) {
+		if (!go_down_forward()) {
 			typename node_children_type::iterator it =
 				++(node_children_type::s_iterator_to(*tnode));
 			if (it != tnode->parent->children.end()) {
 				tnode = &(*it);
 				if (tnode->no_value()) {
-					go_down();
+					go_down_forward();
 				}
 			} else {
-				go_up();
+				go_up_forward();
 			}
 		}
 	}
 
 	void trie_node_decrement()
 	{
-		// at iterator begin
-		if (tnode->pred_node->parent == NULL)
-			return;
-		tnode = tnode->pred_node;
+		children_iterator it = node_children_type::s_iterator_to(*tnode);
+		if (tnode->parent) {
+			if (it != tnode->parent->children.begin()) {
+				--it;
+				tnode = &(*it);
+				go_down_backward();
+			} else {
+				go_up_backward();
+			}
+		} else {
+			go_down_backward();
+		}
 	}
 
 	self& operator++()
@@ -329,7 +360,7 @@ public:
 	self operator++(int) const
 	{
 		self tmp = *this;
-		tmp.trie_node_increment();
+		trie_node_increment();
 		return tmp;
 	}
 
@@ -342,7 +373,7 @@ public:
 	self operator--(int) const
 	{
 		self tmp = *this;
-		tmp.trie_node_decrement();
+		trie_node_decrement();
 		return tmp;
 	}
 };
