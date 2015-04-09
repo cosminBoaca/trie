@@ -769,7 +769,7 @@ public:
 		{
 			/*
 			 *This is necessary because the ++ operator on the multivalue
-			 *iterator wouldn't always modify tnode and this will result
+			 *iterator wouldn't always modify tnode and this may result
 			 *in double free
 			 */
 			if (multi_value_node)

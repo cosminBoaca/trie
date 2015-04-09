@@ -280,14 +280,12 @@ struct trie_node<Key, void, false> : private boost::noncopyable,
 	node_ptr parent;
 	size_type value_count;
 	bool key_ends_here;
-	node_ptr pred_node;
-	node_ptr next_node;
 
-	explicit trie_node() : parent(0), value_count(0),  key_ends_here(false), pred_node(0), next_node(0)
+	explicit trie_node() : parent(0), value_count(0),  key_ends_here(false)
 	{
 	}
 
-	explicit trie_node(const key_type& key) : key(key), parent(0), value_count(0),  key_ends_here(false), pred_node(0), next_node(0)
+	explicit trie_node(const key_type& key) : key(key), parent(0), value_count(0),  key_ends_here(false)
 	{
 	}
 
