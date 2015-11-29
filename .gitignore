@@ -19,3 +19,5 @@ tags
 
 libs/
 build/
+bin/
+*bin/*

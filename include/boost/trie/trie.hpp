@@ -46,7 +46,7 @@ private:
 	value_alloc_type value_allocator;
 	comparator node_comparator;
 
-	node_ptr root;
+	node_type root;
 	size_type node_count; // node_count is difficult and useless to maintain on each node, so, put it on the tree
 
 	node_ptr create_trie_node()
@@ -109,7 +109,7 @@ private:
 	// copy the whole trie tree
 	void copy_tree(node_ptr other_root)
 	{
-		if (other_root == root)
+		if (other_root == &root)
 			return;
 
 		clear();
@@ -119,7 +119,7 @@ private:
 		std::stack<node_ptr> other_node_stk, self_node_stk;
 		std::stack<typename node_type::children_iter> ci_stk;
 		other_node_stk.push(other_root);
-		self_node_stk.push(root);
+		self_node_stk.push(&root);
 		ci_stk.push(other_root->children.begin());
 		for (; !other_node_stk.empty(); )
 		{
@@ -150,9 +150,9 @@ private:
 			}
 		}
 		if (multi_value_node)
-			copy_values_from(root, other_root, value_allocator);
+			copy_values_from(&root, other_root, value_allocator);
 		else
-			copy_values_from(root, other_root);
+			copy_values_from(&root, other_root);
 	}
 
 	node_ptr next_node_with_value(node_ptr tnode)
@@ -196,21 +196,19 @@ public:
 	// iterators still unavailable here
 
 	explicit trie() : node_allocator(), value_allocator(),
-		root(create_trie_node()),
 		node_count(0)
 	{
 	}
 
 	explicit trie(const trie_type& t) : node_allocator(), value_allocator(),
-		root(create_trie_node()),
 		node_count(0)
 	{
-		copy_tree(t.root);
+		copy_tree(const_cast<node_ptr>(&t.root));
 	}
 
 	trie_type& operator=(const trie_type& t)
 	{
-		copy_tree(t.root);
+		copy_tree(const_cast<node_ptr>(&t.root));
 		return *this;
 	}
 
@@ -223,32 +221,32 @@ public:
 
 	iterator begin()
 	{
-		return leftmost_node(root);
+		return leftmost_node(&root);
 	}
 
 	const_iterator begin() const
 	{
-		return leftmost_node(root);
+		return leftmost_node(const_cast<node_ptr>(&root));
 	}
 
 	const_iterator cbegin() const
 	{
-		return leftmost_node(root);
+		return leftmost_node(const_cast<node_ptr>(&root));
 	}
 
 	iterator end()
 	{
-		return root;
+		return (&root);
 	}
 
 	const_iterator end() const
 	{
-		return root;
+		return const_cast<node_ptr>(&root);
 	}
 
 	const_iterator cend() const
 	{
-		return root;
+		return const_cast<node_ptr>(&root);
 	}
 
 	reverse_iterator rbegin()
@@ -332,7 +330,7 @@ public:
 			BOOST_STATIC_ASSERT_MSG(boost::is_void<Value>::value,
 					"Value template parameter should be void");
 
-			node_ptr cur = root;
+			node_ptr cur = const_cast<node_ptr>(&root);
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
@@ -380,7 +378,7 @@ public:
 	template<typename Iter>
 		pair_iterator_bool insert_unique(Iter first, Iter last, const non_void_value_type& value)
 		{
-			node_ptr cur = root;
+			node_ptr cur = const_cast<node_ptr>(&root);
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
@@ -410,7 +408,7 @@ public:
 		iterator insert_equal(Iter first, Iter last,
 				const non_void_value_type& value)
 		{
-			node_ptr cur = root;
+			node_ptr cur = const_cast<node_ptr>(&root);
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
@@ -433,7 +431,7 @@ public:
 	template<typename Iter>
 		node_ptr find_node(Iter first, Iter last)
 		{
-			node_ptr cur = root;
+			node_ptr cur = const_cast<node_ptr>(&root);
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
@@ -530,7 +528,7 @@ public:
 	template<typename Iter>
 		node_ptr upper_bound(Iter first, Iter last)
 		{
-			node_ptr cur = root;
+			node_ptr cur = const_cast<node_ptr>(&root);
 			// use a stack to store iterator in order to avoid the iterator cannot go backward
 			std::stack< Iter > si;
 			for (; first != last; ++first)
@@ -547,7 +545,7 @@ public:
 					while (ci == cur->children.end())
 					{
 						if (cur->parent == NULL)
-							return root;
+							return &root;
 						cur = cur->parent;
 						ci = cur->children.upper_bound(*si.top());
 					}
@@ -577,7 +575,7 @@ public:
 	template<typename Iter>
 		node_ptr lower_bound(Iter first, Iter last)
 		{
-			node_ptr cur = root;
+			node_ptr cur = const_cast<node_ptr>(&root);
 			// use a stack to store iterator in order to avoid the iterator cannot go backward
 			std::stack< Iter > si;
 			for (; first != last; ++first)
@@ -594,7 +592,7 @@ public:
 					while (ci == cur->children.end())
 					{
 						if (cur->parent == NULL)
-							return root;
+							return &root;
 						cur = cur->parent;
 						ci = cur->children.upper_bound(*si.top());
 					}
@@ -626,7 +624,7 @@ public:
 			//return make_pair(lower_bound(first, last), upper_bound(first, last));
 			node_ptr node = find_node(first, last);
 			if (node == NULL || node->value_list_header == NULL)
-				return std::make_pair(iterator(root), iterator(root));
+				return std::make_pair(iterator(&root), iterator(&root));
 			iterator it_end = iterator(node->value_list_tail);
 			++it_end;
 			return std::make_pair(iterator(node->value_list_header), it_end);
@@ -640,7 +638,7 @@ public:
 
 	void erase_check_ancestor(node_ptr cur, size_type delta) // delete empty ancestors and update value_count
 	{
-		while (cur != root && cur->children.empty() && cur->no_value())
+		while (cur != &root && cur->children.empty() && cur->no_value())
 		{
 			node_ptr parent = cur->parent;
 			parent->children.erase(parent->children.iterator_to(*cur));
@@ -752,7 +750,7 @@ public:
 
 		iterator it(cur);
 
-		if (cur == root)
+		if (cur == &root)
 			it = begin();
 
 		if (leftmost == rightmost)
@@ -787,13 +785,9 @@ public:
 		std::swap(t.node_count, node_count);
 	}
 
-	void clear(bool delete_root = false)
+	void clear()
 	{
-		clear(root);
-		if (delete_root) {
-			destroy_trie_node(root);
-			node_count--;
-		}
+		clear(&root);
 	}
 
 	size_type count_node() const {
@@ -801,16 +795,16 @@ public:
 	}
 
 	size_type size() const {
-		return root->value_count;
+		return root.value_count;
 	}
 
 	bool empty() const {
-		return root->value_count == 0;
+		return root.value_count == 0;
 	}
 
 	~trie()
 	{
-		clear(true);
+		clear();
 	}
 };
 
