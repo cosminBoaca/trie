@@ -16,7 +16,6 @@ os:
 env:
     - CXX_STANDARD=c++98
     - CXX_STANDARD=c++0x
-    - BOOST_ROOT=$HOME/boost-local
 
 before_install:
     # Set this to the name of your Boost library
