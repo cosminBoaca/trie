@@ -1,5 +1,4 @@
-#define BOOST_TEST_MODULE trie_test
-#include <boost/test/unit_test.hpp>
+#include <boost/core/lightweight_test.hpp>
 #include "boost/trie/trie.hpp"
 #include "boost/trie/trie_map.hpp"
 
@@ -7,9 +6,7 @@
 #include <string>
 #include <map>
 
-BOOST_AUTO_TEST_SUITE(trie_test__mentor_antony)
-
-BOOST_AUTO_TEST_CASE(default_construction_and_destruction)
+void default_construction_and_destruction()
 {
     boost::tries::trie_map<std::string, std::string> t;
     (void)t;
@@ -19,7 +16,7 @@ class no_default_constructor_type {
     explicit no_default_constructor_type(int /*i*/){}
 };
 
-BOOST_AUTO_TEST_CASE(no_default_constructor_key)
+void no_default_constructor_key()
 {
 	std::map<no_default_constructor_type, int> t;
 	(void)t;
@@ -51,7 +48,7 @@ public:
 
     ~counter_type() {
         ++ m_deleted;
-        BOOST_CHECK_EQUAL(m_deleted, 1);
+        BOOST_TEST_EQ(m_deleted, 1);
         ++ m_counts_deleted;
     }
 
@@ -66,7 +63,7 @@ inline bool operator< (const counter_type& v1, const counter_type& v2) {
     return v1.value() < v2.value();
 }
 
-BOOST_AUTO_TEST_CASE(counting_constructions_and_destructions_key)
+void counting_constructions_and_destructions_key()
 {
     counter_type::reset();
     std::vector<counter_type> data;
@@ -78,7 +75,7 @@ BOOST_AUTO_TEST_CASE(counting_constructions_and_destructions_key)
     std::cout << counter_type::counts_alive() << std::endl;
     std::cout.flush();
     const int data_size = static_cast<int>(data.size());
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size);
+    BOOST_TEST_EQ(counter_type::counts_alive(), data_size);
 
     /*
        +1 is because all the nodes are copied / destructed in node_ref_from function
@@ -86,25 +83,25 @@ BOOST_AUTO_TEST_CASE(counting_constructions_and_destructions_key)
     */
     boost::tries::trie_map<counter_type, int> *t = new boost::tries::trie_map<counter_type, int>();
     t->insert(data, 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
+    BOOST_TEST_EQ(counter_type::counts_alive(), data_size * 2 + 1);
 
     t->insert(data, 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
+    BOOST_TEST_EQ(counter_type::counts_alive(), data_size * 2 + 1);
 
     t->insert(data.begin(), data.end(), 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
+    BOOST_TEST_EQ(counter_type::counts_alive(), data_size * 2 + 1);
 
     t->insert(data.begin() + 1, data.end(), 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 3 - 1);
+    BOOST_TEST_EQ(counter_type::counts_alive(), data_size * 3 - 1);
 
     t->clear();
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size + 1);
+    BOOST_TEST_EQ(counter_type::counts_alive(), data_size + 1);
     delete t;
     /* This check is performed to prove that the comment above is true */
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size);
+    BOOST_TEST_EQ(counter_type::counts_alive(), data_size);
 }
 
-BOOST_AUTO_TEST_CASE(counting_alive_equal_keys)
+void counting_alive_equal_keys()
 {
     counter_type::reset();
     std::vector<counter_type> data(25,counter_type(0));
@@ -112,22 +109,28 @@ BOOST_AUTO_TEST_CASE(counting_alive_equal_keys)
 
     /*
        See counting_constructions_and_destructions test for explanations about why
-       + 1 is required in BOOST_CHECK_EQUAL
+       + 1 is required in BOOST_TEST_EQ
     */
     boost::tries::trie_map<counter_type, int> t;
     t.insert(data, 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
+    BOOST_TEST_EQ(counter_type::counts_alive(), data_size * 2 + 1);
 
     t.insert(data, 0);
-    BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
+    BOOST_TEST_EQ(counter_type::counts_alive(), data_size * 2 + 1);
 
     std::vector<counter_type>::const_iterator it = data.begin(),
             end = data.end();
     for (; it != end; ++it)
     {
         t.insert(it, end, 0);
-        BOOST_CHECK_EQUAL(counter_type::counts_alive(), data_size * 2 + 1);
+        BOOST_TEST_EQ(counter_type::counts_alive(), data_size * 2 + 1);
     }
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+int main() {
+    default_construction_and_destruction();
+    no_default_constructor_key();
+    counting_constructions_and_destructions_key();
+    counting_alive_equal_keys();
+    return boost::report_errors();
+}
