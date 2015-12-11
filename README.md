@@ -10,8 +10,8 @@ Boost containers based on the trie data structure.
     make tests
 
 
-#[Boost.Variant](http://boost.org/libs/trie)
-Boost.Variant, it is a set/map-like container based on the Trie data structure.
+#[Boost.Trie](http://boost.org/libs/trie)
+Boost.Trie, it is a set/map-like container based on the Trie data structure.
 
 ### Test results
 
