@@ -35,7 +35,7 @@ public:
 	typedef size_t size_type;
 	typedef std::allocator<node_type> node_alloc_type;
 	typedef std::allocator<value_node_type> value_alloc_type;
-	typedef typename node_type::comparator comparator;
+	typedef detail::comparator comparator;
 	typedef detail::value_remove_helper<node_type, value_alloc_type, multi_value_node> value_remove_helper;
 	typedef detail::value_copy_helper<node_type, value_alloc_type, multi_value_node> value_copy_helper;
 

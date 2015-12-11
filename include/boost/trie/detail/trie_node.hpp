@@ -59,6 +59,41 @@ typedef boost::intrusive::optimize_size<false> unoptimized_size;
 typedef boost::intrusive::constant_time_size<true> constant_time_size;
 typedef boost::intrusive::constant_time_size<false> not_constant_time_size;
 
+template <typename Key, typename Value, bool isMultiValue>
+struct trie_node;
+
+struct comparator {
+    template <typename Key, typename Value, bool isMultiValue>
+    bool operator () (const trie_node<Key, Value, isMultiValue>& a, const trie_node<Key, Value, isMultiValue>& b) const {
+        return a.key < b.key;
+    }
+
+    template <typename Key, typename Value, bool isMultiValue>
+    bool operator () (const Key& a, const trie_node<Key, Value, isMultiValue>& b) const {
+        return a < b.key;
+    }
+
+    template <typename Key, typename Value, bool isMultiValue>
+    bool operator () (const trie_node<Key, Value, isMultiValue>& a, const Key& b) const {
+        return a.key < b;
+    }
+};
+
+
+template <typename Key, typename Value, bool isMultiValue>
+inline bool operator < (const trie_node<Key, Value, isMultiValue>& a, const trie_node<Key, Value, isMultiValue>& b) {
+    return a.key < b.key;
+}
+
+template <typename Key, typename Value, bool isMultiValue>
+inline bool operator > (const trie_node<Key, Value, isMultiValue>& a, const trie_node<Key, Value, isMultiValue>& b) {
+    return a.key > b.key;
+}
+
+template <typename Key, typename Value, bool isMultiValue>
+inline bool operator == (const trie_node<Key, Value, isMultiValue>& a, const trie_node<Key, Value, isMultiValue>& b) {
+    return a.key == b.key;
+}
 template <typename Key, typename Value>
 struct trie_node<Key, Value, true> : private boost::noncopyable,
 						 public boost::intrusive::set_base_hook<optimized_size, normal_link_mode>
@@ -153,30 +188,6 @@ struct trie_node<Key, Value, true> : private boost::noncopyable,
 		self_value_count = other.self_value_count;
 		value_count = other.value_count;
 	}
-
-	struct comparator {
-		bool operator () (const node_type& a, const node_type& b) const {
-			return a.key < b.key;
-		}
-
-		bool operator () (const key_type& a, const node_type& b) const {
-			return a < b.key;
-		}
-
-		bool operator () (const node_type& a, const key_type& b) const {
-			return a.key < b;
-		}
-	};
-
-	friend bool operator < (const node_type& a, const node_type& b) {
-		return a.key < b.key;
-	}
-	friend bool operator > (const node_type& a, const node_type& b) {
-		return a.key > b.key;
-	}
-	friend bool operator == (const node_type& a, const node_type& b) {
-		return a.key == b.key;
-	}
 };
 
 template <typename Key, typename Value>
@@ -236,30 +247,6 @@ struct trie_node<Key, Value, false> : private boost::noncopyable,
 		value_count = other.value_count;
 		has_value = other.has_value;
 	}
-
-	struct comparator {
-		bool operator () (const node_type& a, const node_type& b) const {
-			return a.key < b.key;
-		}
-
-		bool operator () (const key_type& a, const node_type& b) const {
-			return a < b.key;
-		}
-
-		bool operator () (const node_type& a, const key_type& b) const {
-			return a.key < b;
-		}
-	};
-
-	friend bool operator < (const node_type& a, const node_type& b) {
-		return a.key < b.key;
-	}
-	friend bool operator > (const node_type& a, const node_type& b) {
-		return a.key > b.key;
-	}
-	friend bool operator == (const node_type& a, const node_type& b) {
-		return a.key == b.key;
-	}
 };
 
 template <typename Key>
@@ -311,30 +298,6 @@ struct trie_node<Key, void, false> : private boost::noncopyable,
 	void copy_values_from(const node_type& other) {
 		key_ends_here = other.key_ends_here;
 		value_count = other.value_count;
-	}
-
-	struct comparator {
-		bool operator () (const node_type& a, const node_type& b) const {
-			return a.key < b.key;
-		}
-
-		bool operator () (const key_type& a, const node_type& b) const {
-			return a < b.key;
-		}
-
-		bool operator () (const node_type& a, const key_type& b) const {
-			return a.key < b;
-		}
-	};
-
-	friend bool operator < (const node_type& a, const node_type& b) {
-		return a.key < b.key;
-	}
-	friend bool operator > (const node_type& a, const node_type& b) {
-		return a.key > b.key;
-	}
-	friend bool operator == (const node_type& a, const node_type& b) {
-		return a.key == b.key;
 	}
 };
 
