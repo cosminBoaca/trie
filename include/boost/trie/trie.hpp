@@ -41,7 +41,7 @@ public:
 
 private:
 	value_remove_helper remove_values_from;
-	value_copy_helper copy_values_from;
+	value_copy_helper copy_values;
 	node_alloc_type node_allocator;
 	value_alloc_type value_allocator;
 	comparator node_comparator;
@@ -137,9 +137,9 @@ private:
 				if (new_node != NULL)
 					node_count++;
 				if (multi_value_node)
-					copy_values_from(new_node, c, value_allocator);
+					copy_values(new_node, c, value_allocator);
 				else
-					copy_values_from(new_node, c);
+					copy_values(new_node, c);
 				new_node->parent = self_cur;
 				self_cur->children.insert(*new_node);
 				// to next node
@@ -150,9 +150,9 @@ private:
 			}
 		}
 		if (multi_value_node)
-			copy_values_from(&root, other_root, value_allocator);
+			copy_values(&root, other_root, value_allocator);
 		else
-			copy_values_from(&root, other_root);
+			copy_values(&root, other_root);
 	}
 
 	node_ptr next_node_with_value(node_ptr tnode)

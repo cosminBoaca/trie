@@ -15,8 +15,6 @@ project
  : requirements
  <include>$(boost_root)
  <include>../include/
- <library>/boost/test//boost_unit_test_framework
- <link>static
  <testing.launcher>valgrind
  ;
 

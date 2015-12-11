@@ -1,5 +1,4 @@
-#define BOOST_TEST_MODULE trie_test
-#include <boost/test/unit_test.hpp>
+#include <boost/core/lightweight_test.hpp>
 #include "boost/trie/trie_set.hpp"
 // multi include test
 #include "boost/trie/trie_set.hpp"
@@ -7,32 +6,30 @@
 
 #include <string>
 
-BOOST_AUTO_TEST_SUITE(trie_test)
-
 typedef boost::tries::trie_set<char> tsci;
 typedef tsci::iterator ti;
 typedef tsci::const_iterator tci;
 typedef tsci::reverse_iterator tri;
 typedef tsci::const_reverse_iterator tcri;
 
-BOOST_AUTO_TEST_CASE(insert_erase_test)
+void insert_erase_test()
 {
 	tsci t;
 	std::string s = "aaa", s2 = "bbb";
-	BOOST_CHECK(t.empty());
-	BOOST_CHECK(t.begin() == t.end());
-	BOOST_CHECK(t.rbegin() == t.rend());
-	BOOST_CHECK(t.insert(s).second == true);
-	BOOST_CHECK(t.insert(s).second == false);
-	BOOST_CHECK(t.erase(s) == t.end());
-	BOOST_CHECK(t.insert(s).second == true);
-	BOOST_CHECK(t.insert(s2).second == true);
-	BOOST_CHECK(t.insert(s2).second == false);
-	BOOST_CHECK(t.erase(s2) == t.end());
-	BOOST_CHECK(t.insert(s2).second == true);
+	BOOST_TEST(t.empty());
+	BOOST_TEST(t.begin() == t.end());
+	BOOST_TEST(t.rbegin() == t.rend());
+	BOOST_TEST(t.insert(s).second == true);
+	BOOST_TEST(t.insert(s).second == false);
+	BOOST_TEST(t.erase(s) == t.end());
+	BOOST_TEST(t.insert(s).second == true);
+	BOOST_TEST(t.insert(s2).second == true);
+	BOOST_TEST(t.insert(s2).second == false);
+	BOOST_TEST(t.erase(s2) == t.end());
+	BOOST_TEST(t.insert(s2).second == true);
 }
 
-BOOST_AUTO_TEST_CASE(insert_find_test)
+void insert_find_test()
 {
 	tsci t;
 	std::string s1 = "aaa", s2 = "bbb", s3="aaaa", s4 = "aaab";
@@ -40,49 +37,49 @@ BOOST_AUTO_TEST_CASE(insert_find_test)
 	t.insert(s1);
 	t.insert(s2);
 	std::vector<char> v = *(t.find(s1));
-	BOOST_CHECK(std::string(v.begin(), v.end()) == s1);
+	BOOST_TEST(std::string(v.begin(), v.end()) == s1);
 	v = *(t.find(s2));
-	BOOST_CHECK(std::string(v.begin(), v.end()) == s2);
-	BOOST_CHECK(t.find(s1) != t.end());
-	BOOST_CHECK(t.find(s2) != t.end());
+	BOOST_TEST(std::string(v.begin(), v.end()) == s2);
+	BOOST_TEST(t.find(s1) != t.end());
+	BOOST_TEST(t.find(s2) != t.end());
 	t.erase(s1);
-	BOOST_CHECK(t.find(s1) == t.end());
-	BOOST_CHECK(t.find(s2) != t.end());
+	BOOST_TEST(t.find(s1) == t.end());
+	BOOST_TEST(t.find(s2) != t.end());
 	t.insert(s1);
-	BOOST_CHECK(t.insert(s2).second == false);
+	BOOST_TEST(t.insert(s2).second == false);
 	t.insert(s3);
 	t.insert(s4);
-	BOOST_CHECK(t.find(s1) != t.end());
-	BOOST_CHECK(t.find(s2) != t.end());
-	BOOST_CHECK(t.find(s3) != t.end());
-	BOOST_CHECK(t.find(s4) != t.end());
+	BOOST_TEST(t.find(s1) != t.end());
+	BOOST_TEST(t.find(s2) != t.end());
+	BOOST_TEST(t.find(s3) != t.end());
+	BOOST_TEST(t.find(s4) != t.end());
 	v = *(t.find(s1));
-	BOOST_CHECK(std::string(v.begin(), v.end()) == s1);
+	BOOST_TEST(std::string(v.begin(), v.end()) == s1);
 	v = *(t.find(s2));
-	BOOST_CHECK(std::string(v.begin(), v.end()) == s2);
+	BOOST_TEST(std::string(v.begin(), v.end()) == s2);
 	v = *(t.find(s3));
-	BOOST_CHECK(std::string(v.begin(), v.end()) == s3);
+	BOOST_TEST(std::string(v.begin(), v.end()) == s3);
 	v = *(t.find(s4));
-	BOOST_CHECK(std::string(v.begin(), v.end()) == s4);
-	BOOST_CHECK(t.count_prefix(std::string("aa")) == 3);
+	BOOST_TEST(std::string(v.begin(), v.end()) == s4);
+	BOOST_TEST(t.count_prefix(std::string("aa")) == 3);
 	t.erase(s3);
-	BOOST_CHECK(t.count_prefix(std::string("aa")) == 2);
+	BOOST_TEST(t.count_prefix(std::string("aa")) == 2);
 	t.erase(s4);
-	BOOST_CHECK(t.count_prefix(std::string("aa")) == 1);
+	BOOST_TEST(t.count_prefix(std::string("aa")) == 1);
 	t.erase(s1);
-	BOOST_CHECK(t.count_prefix(std::string("aa")) == 0);
-	BOOST_CHECK(t.count_prefix(std::string("bbb")) == 1);
+	BOOST_TEST(t.count_prefix(std::string("aa")) == 0);
+	BOOST_TEST(t.count_prefix(std::string("bbb")) == 1);
 }
 
-BOOST_AUTO_TEST_CASE(copy_test)
+void copy_test()
 {
 	std::string s1 = "aaa", s2 = "bbb", s3="aaaa", s4 = "aaab";
 	tsci t1, t2;
 	t2 = t1;
-	BOOST_CHECK(t1.begin() == t1.end());
-	BOOST_CHECK(t1.empty());
-	BOOST_CHECK(t2.begin() == t2.end());
-	BOOST_CHECK(t2.empty());
+	BOOST_TEST(t1.begin() == t1.end());
+	BOOST_TEST(t1.empty());
+	BOOST_TEST(t2.begin() == t2.end());
+	BOOST_TEST(t2.empty());
 
 	t1.insert(s1);
 	t1.insert(s2);
@@ -90,27 +87,27 @@ BOOST_AUTO_TEST_CASE(copy_test)
 	t1.insert(s4);
 
 	t2 = t1;
-	BOOST_CHECK(t1.count_node() == t2.count_node());
-	BOOST_CHECK(t2.find(s1) != t2.end());
-	BOOST_CHECK(t2.find(s2) != t2.end());
-	BOOST_CHECK(t2.find(s3) != t2.end());
-	BOOST_CHECK(t2.find(s4) != t2.end());
-	BOOST_CHECK(t2.count_prefix(std::string("aa")) == 3);
-	BOOST_CHECK(t2.count_prefix(std::string("xyz")) == 0);
-	BOOST_CHECK(t2.count_prefix(std::string("b")) == 1);
+	BOOST_TEST(t1.count_node() == t2.count_node());
+	BOOST_TEST(t2.find(s1) != t2.end());
+	BOOST_TEST(t2.find(s2) != t2.end());
+	BOOST_TEST(t2.find(s3) != t2.end());
+	BOOST_TEST(t2.find(s4) != t2.end());
+	BOOST_TEST(t2.count_prefix(std::string("aa")) == 3);
+	BOOST_TEST(t2.count_prefix(std::string("xyz")) == 0);
+	BOOST_TEST(t2.count_prefix(std::string("b")) == 1);
 
 	tsci t3(t1);
-	BOOST_CHECK(t1.count_node() == t3.count_node());
-	BOOST_CHECK(t3.find(s1) != t3.end());
-	BOOST_CHECK(t3.find(s2) != t3.end());
-	BOOST_CHECK(t3.find(s3) != t3.end());
-	BOOST_CHECK(t3.find(s4) != t3.end());
-	BOOST_CHECK(t3.count_prefix(std::string("aa")) == 3);
-	BOOST_CHECK(t3.count_prefix(std::string("xyz")) == 0);
-	BOOST_CHECK(t3.count_prefix(std::string("b")) == 1);
+	BOOST_TEST(t1.count_node() == t3.count_node());
+	BOOST_TEST(t3.find(s1) != t3.end());
+	BOOST_TEST(t3.find(s2) != t3.end());
+	BOOST_TEST(t3.find(s3) != t3.end());
+	BOOST_TEST(t3.find(s4) != t3.end());
+	BOOST_TEST(t3.count_prefix(std::string("aa")) == 3);
+	BOOST_TEST(t3.count_prefix(std::string("xyz")) == 0);
+	BOOST_TEST(t3.count_prefix(std::string("b")) == 1);
 }
 
-BOOST_AUTO_TEST_CASE(iterator_operator_plus)
+void iterator_operator_plus()
 {
 	typedef boost::tries::trie_set<int> int_set;
 	typedef int_set::iterator int_set_iter;
@@ -131,25 +128,25 @@ BOOST_AUTO_TEST_CASE(iterator_operator_plus)
 	t.insert(k3);
 
 	int_set_iter iter = t.begin();
-	BOOST_CHECK(*iter == k1);
+	BOOST_TEST(*iter == k1);
 	++iter;
-	BOOST_CHECK(*iter == k2);
+	BOOST_TEST(*iter == k2);
 	++iter;
-	BOOST_CHECK(*iter == k3);
+	BOOST_TEST(*iter == k3);
 	++iter;
-	BOOST_CHECK(iter == t.end());
+	BOOST_TEST(iter == t.end());
 
 	int_set_riter riter = t.rbegin();
-	BOOST_CHECK(*riter == k3);
+	BOOST_TEST(*riter == k3);
 	++riter;
-	BOOST_CHECK(*riter == k2);
+	BOOST_TEST(*riter == k2);
 	++riter;
-	BOOST_CHECK(*riter == k1);
+	BOOST_TEST(*riter == k1);
 	++riter;
-	BOOST_CHECK(riter == t.rend());
+	BOOST_TEST(riter == t.rend());
 }
 
-BOOST_AUTO_TEST_CASE(iterator_operator_minus)
+void iterator_operator_minus()
 {
 	typedef boost::tries::trie_set<int> int_set;
 	typedef int_set::iterator int_set_iter;
@@ -169,22 +166,29 @@ BOOST_AUTO_TEST_CASE(iterator_operator_minus)
 	t.insert(k3);
 
 	int_set_iter iter = (--t.end());
-	BOOST_CHECK(*iter == k3);
+	BOOST_TEST(*iter == k3);
 	--iter;
-	BOOST_CHECK(*iter == k2);
+	BOOST_TEST(*iter == k2);
 	--iter;
-	BOOST_CHECK(*iter == k1);
+	BOOST_TEST(*iter == k1);
 	--iter;
-	BOOST_CHECK(iter == t.begin());
+	BOOST_TEST(iter == t.begin());
 
 	int_set_riter riter = (--t.rend());
-	BOOST_CHECK(*riter == k1);
+	BOOST_TEST(*riter == k1);
 	--riter;
-	BOOST_CHECK(*riter == k2);
+	BOOST_TEST(*riter == k2);
 	--riter;
-	BOOST_CHECK(*riter == k3);
+	BOOST_TEST(*riter == k3);
 	--riter;
-	BOOST_CHECK(riter == t.rbegin());
+	BOOST_TEST(riter == t.rbegin());
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+int main() {
+	insert_erase_test();
+	insert_find_test();
+	copy_test();
+	iterator_operator_plus();
+	iterator_operator_minus();
+	return boost::report_errors();
+}
