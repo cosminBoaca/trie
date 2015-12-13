@@ -15,7 +15,7 @@ os:
 
 env:
     - CXX_STANDARD=c++0x
-    - CXX_STANDARD=c++98
+    - CXX_STANDARD=gnu++98
 
 before_install:
     # Set this to the name of your Boost library
