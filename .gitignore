@@ -18,6 +18,7 @@ tags
 *.obj
 *.exe
 Jamroot
+*a.out*
 
 libs/
 build/

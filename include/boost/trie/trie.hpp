@@ -526,93 +526,75 @@ public:
 
 	// upper_bound() to find the first node that greater than the key
 	template<typename Iter>
-		node_ptr upper_bound(Iter first, Iter last)
+		iterator upper_bound(Iter first, Iter last)
 		{
-			node_ptr cur = const_cast<node_ptr>(&root);
-			// use a stack to store iterator in order to avoid the iterator cannot go backward
-			std::stack< Iter > si;
-			for (; first != last; ++first)
-			{
-				si.push(first);
-				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key, node_comparator);
-				// using upper_bound needs comparison in every step, so using find until ci == NULL
-				if (ci == cur->children.end())
-				{
-					// find a node that
-					ci = cur->children.upper_bound(cur_key, node_comparator);
-					si.pop();
-					while (ci == cur->children.end())
-					{
-						if (cur->parent == NULL)
-							return &root;
-						cur = cur->parent;
-						ci = cur->children.upper_bound(*si.top());
-					}
-					cur = ci->second;
-					while (cur->no_value())
-					{
-						cur = &(*(cur->children.begin()));
-					}
-					return cur;
-				}
-				cur = &(*ci);
+			std::pair<iterator, bool> lb_result = lower_bound(first, last);
+			// Full match
+			if (lb_result.second) {
+				++lb_result.first;
 			}
-			// if find a full match, then increment it
-			iterator tmp(cur);
-			tmp.trie_node_increment();
-			cur = tmp.tnode;
-			return cur;
+			return lb_result.first;
 		}
 
 	template<typename Container>
-		node_ptr upper_bound(const Container &container)
+		iterator upper_bound(const Container &container)
 		{
 			return upper_bound(container.begin(), container.end());
 		}
 
 	// lower_bound()
 	template<typename Iter>
-		node_ptr lower_bound(Iter first, Iter last)
+		std::pair<iterator, bool> lower_bound(Iter first, Iter last)
 		{
-			node_ptr cur = const_cast<node_ptr>(&root);
-			// use a stack to store iterator in order to avoid the iterator cannot go backward
-			std::stack< Iter > si;
+			typedef typename node_type::children_iter children_iterator;
+			node_ptr cur = &root;
+			node_ptr last_lb_candidate = NULL;
+
 			for (; first != last; ++first)
 			{
-				si.push(first);
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key);
-				// using upper_bound needs comparison in every step, so using find until ci == NULL
-				if (ci == cur->children.end())
-				{
-					// find a node that
-					ci = cur->children.upper_bound(cur_key);
-					si.pop();
-					while (ci == cur->children.end())
-					{
-						if (cur->parent == NULL)
-							return &root;
-						cur = cur->parent;
-						ci = cur->children.upper_bound(*si.top());
-					}
-					cur = ci->second;
-					while (cur->no_value())
-					{
-						cur = &(*(cur->children.begin()));
-					}
-					return cur;
+				children_iterator child_iter =
+					cur->children.find(cur_key, node_comparator);
+				if (child_iter == cur->children.end()) {
+					break;
 				}
-				cur = &(*ci);
+				children_iterator lb_candidate_iter = child_iter;
+				lb_candidate_iter++;
+				if (lb_candidate_iter != cur->children.end()) {
+					last_lb_candidate = &(*lb_candidate_iter);
+				}
+				cur = &(*child_iter);
 			}
-			// lower_bound() needn't increment here!!!
-			return cur;
+
+			if (first != last) {
+				children_iterator lb_candidate_iter =
+					cur->children.upper_bound(*first, node_comparator);
+				if (lb_candidate_iter == cur->children.end()) {
+					if (last_lb_candidate != NULL) {
+						cur = last_lb_candidate;
+					} else {
+						return std::make_pair(&root, false);
+					}
+				} else {
+					return std::make_pair(&(*lb_candidate_iter), false);
+				}
+			}
+
+			if (!cur->no_value() && first == last) {
+				return std::make_pair(cur, true);
+			}
+
+			while (cur->no_value()) {
+				cur = &(*cur->children.begin());
+			}
+
+			return std::make_pair(cur, false);
 		}
 
 	template<typename Container>
-		node_ptr lower_bound(const Container &container)
+		iterator lower_bound(const Container &container)
 		{
-			return lower_bound(container.begin(), container.end());
+			return lower_bound(container.begin(), container.end()).first;
 		}
 
 	// equal_range() is the same as find_prefix? the meaning is different
@@ -778,7 +760,7 @@ public:
 		erase_node(cur);
 	}
 
-	void swap(const trie_type& t)
+	void swap(trie_type& t)
 	{
 		// is it OK?
 		std::swap(root, t.root);

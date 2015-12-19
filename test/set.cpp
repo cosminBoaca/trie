@@ -184,11 +184,46 @@ void iterator_operator_minus()
 	BOOST_TEST(riter == t.rbegin());
 }
 
+void lower_bound_test() {
+	tsci t;
+	std::string s1 = "aaa", s2 = "aab", s3 = "abc";
+	t.insert(s1);
+	t.insert(s2);
+	t.insert(s3);
+	BOOST_TEST(t.lower_bound(s1) == t.find(s1));
+	BOOST_TEST(t.lower_bound(std::string("abb")) == t.find(std::string("abc")));
+	BOOST_TEST(t.lower_bound(std::string("b")) == t.end());
+	t.insert(std::string("abcdef"));
+	BOOST_TEST(t.lower_bound(std::string("abcd")) == t.find(std::string("abcdef")));
+	t.insert(std::string("bbcccc"));
+	t.insert(std::string("bbd"));
+	BOOST_TEST(t.lower_bound(std::string("bbcccd")) == t.find(std::string("bbd")));
+}
+
+void upper_bound_test() {
+	tsci t;
+	std::string s1 = "aaa", s2 = "aab", s3 = "abc";
+	t.insert(s1);
+	t.insert(s2);
+	t.insert(s3);
+	BOOST_TEST(t.upper_bound(std::string("abb")) == t.find(std::string("abc")));
+	BOOST_TEST(t.upper_bound(std::string("b")) == t.end());
+	BOOST_TEST(t.upper_bound(s3) == t.end());
+	BOOST_TEST(t.upper_bound(s1) == t.find(s2));
+	t.insert(std::string("abcdef"));
+	BOOST_TEST(t.upper_bound(std::string("abcd")) == t.find(std::string("abcdef")));
+	t.insert(std::string("bbcccc"));
+	t.insert(std::string("bbd"));
+	BOOST_TEST(t.upper_bound(std::string("bbcccd")) == t.find(std::string("bbd")));
+}
+
 int main() {
 	insert_erase_test();
 	insert_find_test();
 	copy_test();
 	iterator_operator_plus();
 	iterator_operator_minus();
+	lower_bound_test();
+	upper_bound_test();
 	return boost::report_errors();
 }
