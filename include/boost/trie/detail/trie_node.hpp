@@ -94,9 +94,11 @@ template <typename Key, typename Value, bool isMultiValue>
 inline bool operator == (const trie_node<Key, Value, isMultiValue>& a, const trie_node<Key, Value, isMultiValue>& b) {
     return a.key == b.key;
 }
+
 template <typename Key, typename Value>
-struct trie_node<Key, Value, true> : private boost::noncopyable,
-						 public boost::intrusive::set_base_hook<optimized_size, normal_link_mode>
+struct trie_node<Key, Value, true> :
+    private boost::noncopyable,
+    public boost::intrusive::set_base_hook<optimized_size, normal_link_mode>
 {
 	typedef Key key_type;
 	typedef Value value_type;
@@ -191,8 +193,9 @@ struct trie_node<Key, Value, true> : private boost::noncopyable,
 };
 
 template <typename Key, typename Value>
-struct trie_node<Key, Value, false> : private boost::noncopyable,
-									  public boost::intrusive::set_base_hook<optimized_size, normal_link_mode>
+struct trie_node<Key, Value, false> :
+    private boost::noncopyable,
+    public boost::intrusive::set_base_hook<optimized_size, normal_link_mode>
 {
 	typedef Key key_type;
 	typedef Value value_type;
@@ -250,7 +253,8 @@ struct trie_node<Key, Value, false> : private boost::noncopyable,
 };
 
 template <typename Key>
-struct trie_node<Key, void, false> : private boost::noncopyable,
+struct trie_node<Key, void, false> :
+	private boost::noncopyable,
 	public boost::intrusive::set_base_hook<optimized_size, normal_link_mode>
 {
 	typedef Key key_type;
