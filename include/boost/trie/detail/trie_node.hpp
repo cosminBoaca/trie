@@ -79,7 +79,6 @@ struct comparator {
     }
 };
 
-
 template <typename Key, typename Value, bool isMultiValue>
 inline bool operator < (const trie_node<Key, Value, isMultiValue>& a, const trie_node<Key, Value, isMultiValue>& b) {
     return a.key < b.key;
