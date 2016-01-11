@@ -12,10 +12,11 @@
 #include <boost/type_traits/is_void.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/blank.hpp>
+#include <boost/trie/detail/value_storage_policy.hpp>
 
 namespace boost { namespace tries {
 
-template <typename Key, typename Value, bool multi_value_node = true>
+template <typename Key, typename Value, bool multiValueNode = true>
 class trie {
 public:
 	typedef Key key_type;
@@ -25,21 +26,26 @@ public:
 		boost::blank,
 		Value
 	>::type non_void_value_type;
+	typedef typename detail::value_storage_policy
+	<
+		Value,
+		multiValueNode,
+		std::allocator<Value>
+	>::type value_storage_policy;
 	typedef Value value_type;
 	typedef value_type* value_ptr;
-	typedef trie<key_type, Value, multi_value_node> trie_type;
-	typedef typename detail::trie_node<key_type, value_type, multi_value_node> node_type;
+	typedef trie<key_type, Value, multiValueNode> trie_type;
+	typedef typename detail::trie_node<key_type, value_storage_policy> node_type;
 	typedef node_type * node_ptr;
-	typedef typename detail::value_list_node<key_type, value_type> value_node_type;
-	typedef value_node_type * value_node_ptr;
 	typedef size_t size_type;
 	typedef std::allocator<node_type> node_alloc_type;
-	typedef std::allocator<value_node_type> value_alloc_type;
 	typedef detail::comparator comparator;
-	typedef detail::value_remove_helper<node_type, value_alloc_type, multi_value_node> value_remove_helper;
-	typedef detail::value_copy_helper<node_type, value_alloc_type, multi_value_node> value_copy_helper;
+	/*
+	 *typedef detail::value_remove_helper<node_type, value_alloc_type, multiValueNode> value_remove_helper;
+	 *typedef detail::value_copy_helper<node_type, value_alloc_type, multiValueNode> value_copy_helper;
+	 */
 
-	typedef detail::trie_iterator<Key, Value, multi_value_node> iterator;
+	typedef detail::trie_iterator<Key, value_storage_policy, multiValueNode> iterator;
 	typedef typename iterator::const_iterator const_iterator;
 	typedef std::reverse_iterator<iterator> reverse_iterator;
 	typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
@@ -47,12 +53,16 @@ public:
 	typedef std::pair<iterator, iterator> iterator_range;
 
 private:
-	value_remove_helper remove_values_from;
-	value_copy_helper copy_values;
+	/*
+	 *value_remove_helper remove_values_from;
+	 *value_copy_helper copy_data_from;
+	 */
 	node_alloc_type node_allocator;
-	value_alloc_type value_allocator;
-	comparator node_comparator;
+	/*
+	 *value_alloc_type value_allocator;
+	 */
 
+	comparator node_comparator;
 	node_type root;
 	size_type node_count; // node_count is difficult and useless to maintain on each node, so, put it on the tree
 
@@ -70,11 +80,8 @@ private:
 
 	void destroy_trie_node(node_ptr node)
 	{
-		//node->remove_values(value_allocator);
-		if (multi_value_node)
-			remove_values_from(node, value_allocator);
-		else
-			remove_values_from(node);
+		node_count--;
+		node->remove_values();
 		node_allocator.destroy(node);
 		node_allocator.deallocate(node, 1);
 	}
@@ -124,7 +131,7 @@ private:
 		// but inserting one by one need key, so it is hard to do that
 
 		std::stack<node_ptr> other_node_stk, self_node_stk;
-		std::stack<typename node_type::children_iter> ci_stk;
+		std::stack<typename node_type::children_iterator_type> ci_stk;
 		other_node_stk.push(other_root);
 		self_node_stk.push(&root);
 		ci_stk.push(other_root->children.begin());
@@ -143,10 +150,13 @@ private:
 				node_ptr new_node = create_trie_node(c->key);
 				if (new_node != NULL)
 					node_count++;
-				if (multi_value_node)
-					copy_values(new_node, c, value_allocator);
-				else
-					copy_values(new_node, c);
+				/*
+				 *if (multiValueNode)
+				 *    copy_data_from(new_node, c, value_allocator);
+				 *else
+				 *    copy_data_from(new_node, c);
+				 */
+				new_node->copy_data_from(*c);
 				new_node->parent = self_cur;
 				self_cur->children.insert(*new_node);
 				// to next node
@@ -156,10 +166,13 @@ private:
 				self_node_stk.push(new_node);
 			}
 		}
-		if (multi_value_node)
-			copy_values(&root, other_root, value_allocator);
-		else
-			copy_values(&root, other_root);
+		/*
+		 *if (multiValueNode)
+		 *    copy_data_from(&root, other_root, value_allocator);
+		 *else
+		 *    copy_data_from(&root, other_root);
+		 */
+		root.copy_data_from(*other_root);
 	}
 
 	node_ptr next_node_with_value(node_ptr tnode)
@@ -180,7 +193,7 @@ private:
 			while (cur->parent != NULL)
 			{
 				node_ptr p = cur->parent;
-				typename node_type::children_iter ci = p->children.iterator_to(*cur);
+				typename node_type::children_iterator_type ci = p->children.iterator_to(*cur);
 				++ci;
 				if (ci != p->children.end())
 				{
@@ -216,8 +229,7 @@ private:
 				const non_void_value_type& value)
 		{
 			insert(cur, first, last);
-			cur->value = value;
-			cur->has_value = true;
+			cur->add_value(value);
 			// update value_count on the path
 			node_ptr tmp = cur;
 			while (tmp != NULL) // until root
@@ -232,7 +244,7 @@ private:
 		iterator insert_multiple_value(node_ptr cur, Iter first, Iter last,
 				const non_void_value_type& value) {
 			insert(cur, first, last);
-			cur->add_value(value, value_allocator);
+			cur->add_value(value);
 			// update value_count on the path
 			node_ptr tmp = cur;
 			while (tmp != NULL) // until root
@@ -240,7 +252,7 @@ private:
 				++tmp->value_count;
 				tmp = tmp->parent;
 			}
-			return cur->value_list_header;
+			return cur;
 		}
 
 	template<typename Iter>
@@ -250,7 +262,7 @@ private:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key, node_comparator);
+				typename node_type::children_iterator_type ci = cur->children.find(cur_key, node_comparator);
 				if (ci == cur->children.end())
 				{
 					return NULL;
@@ -269,7 +281,7 @@ private:
 	template<typename Iter>
 		std::pair<iterator, bool> lower_bound_impl(Iter first, Iter last)
 		{
-			typedef typename node_type::children_iter children_iterator;
+			typedef typename node_type::children_iterator_type children_iterator;
 			node_ptr cur = &root;
 			node_ptr last_lb_candidate = NULL;
 
@@ -321,11 +333,20 @@ private:
 			node_ptr parent = cur->parent;
 			parent->children.erase(parent->children.iterator_to(*cur));
 			destroy_trie_node(cur);
-			node_count--;
 			cur = parent;
 		}
 
 		// update value_count on each ancestral node
+		while (cur != NULL)
+		{
+			cur->value_count -= delta;
+			cur = cur->parent;
+		}
+	}
+
+	void decrease_value_count_of_ancestors(node_ptr node) {
+		node_ptr cur = node->parent;
+		size_type delta = node->count();
 		while (cur != NULL)
 		{
 			cur->value_count -= delta;
@@ -341,24 +362,44 @@ private:
 			return ret;
 		ret = node->count();
 		node_ptr cur = node;
-		if (multi_value_node)
-			remove_values_from(node, value_allocator);
-		else
-			remove_values_from(node);
+		node->remove_values();
 		erase_check_ancestor(cur, ret);
 		return ret;
+	}
+
+	void clear_impl(node_ptr node, bool deallocate_node) {
+		typedef typename node_type::children_iterator_type children_iterator;
+
+		node_ptr son;
+		children_iterator son_iter = node->children.begin();
+		children_iterator next_son_iter(son_iter);
+		if (next_son_iter != node->children.end()) {
+			++next_son_iter;
+		}
+
+		while (son_iter != node->children.end()) {
+			son = &(*son_iter);
+			son_iter = next_son_iter;
+			if (next_son_iter != node->children.end()) {
+				++next_son_iter;
+			}
+			clear_impl(son, true);
+		}
+
+		node->children.clear();
+		decrease_value_count_of_ancestors(node);
+		if (deallocate_node)
+			destroy_trie_node(node);
 	}
 
 public:
 	// iterators still unavailable here
 
-	explicit trie() : node_allocator(), value_allocator(),
-	node_count(0)
+	explicit trie() : node_allocator(), node_count(0)
 	{
 	}
 
-	explicit trie(const trie_type& t) : node_allocator(), value_allocator(),
-	node_count(0)
+	explicit trie(const trie_type& t) : node_allocator(), node_count(0)
 	{
 		copy_tree(const_cast<node_ptr>(&t.root));
 	}
@@ -441,7 +482,7 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key, node_comparator);
+				typename node_type::children_iterator_type ci = cur->children.find(cur_key, node_comparator);
 				if (ci == cur->children.end())
 					break;
 				cur = &(*ci);
@@ -489,7 +530,7 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key, node_comparator);
+				typename node_type::children_iterator_type ci = cur->children.find(cur_key, node_comparator);
 				if (ci == cur->children.end())
 				{
 					return std::make_pair(insert_single_value(cur, first, last, value), true);
@@ -519,7 +560,7 @@ public:
 			for (; first != last; ++first)
 			{
 				const key_type& cur_key = *first;
-				typename node_type::children_iter ci = cur->children.find(cur_key, node_comparator);
+				typename node_type::children_iterator_type ci = cur->children.find(cur_key, node_comparator);
 				if (ci == cur->children.end())
 				{
 					return insert_multiple_value(cur, first, last, value);
@@ -647,11 +688,11 @@ public:
 			// @that is not right here
 			//return make_pair(lower_bound(first, last), upper_bound(first, last));
 			node_ptr node = find_node(first, last);
-			if (node == NULL || node->value_list_header == NULL)
+			if (node == NULL || node->count() == 0)
 				return std::make_pair(iterator(&root), iterator(&root));
-			iterator it_end = iterator(node->value_list_tail);
+			iterator it_end = iterator(--(node->value_list.end()));
 			++it_end;
-			return std::make_pair(iterator(node->value_list_header), it_end);
+			return std::make_pair(iterator(node->value_list.begin()), it_end);
 		}
 
 	template<typename Container>
@@ -662,7 +703,7 @@ public:
 
 
 	// erase one value, after erasing value, check if it is necessary to erase node
-	iterator erase(iterator it)
+	iterator erase_impl(iterator it)
 	{
 		if (it == end())
 			return it;
@@ -677,9 +718,14 @@ public:
 		return ret;
 	}
 
+	iterator erase(iterator it)
+	{
+		return erase_impl(it);
+	}
+
 	iterator erase(const_iterator it)
 	{
-		return erase(iterator(it.tnode, it.vnode));
+		return erase_impl(iterator(it.tnode, it.viter));
 	}
 
 	template<typename Iter>
@@ -687,7 +733,6 @@ public:
 		{
 			iterator it = find(first, last);
 			return erase(it);
-
 		}
 
 	template<typename Container>
@@ -731,42 +776,12 @@ public:
 			return erase_prefix(container.begin(), container.end());
 		}
 
-	void clear(node_ptr node)
-	{
-		node_ptr cur = node;
-		node_ptr leftmost = leftmost_node(cur);
-		node_ptr rightmost = rightmost_node(cur);
 
-		iterator it(cur);
 
-		if (cur == &root)
-			it = begin();
-
-		if (leftmost == rightmost)
-			return;
-
-		if (leftmost == cur)
-		{
-			cur = (++it).tnode;
-		}
-		else {
-			cur = leftmost;
-		}
-		for (node_ptr next; cur != rightmost; cur = next)
-		{
-			/*
-			 *This is necessary because the ++ operator on the multivalue
-			 *iterator wouldn't always modify tnode and this may result
-			 *in double free
-			 */
-			if (multi_value_node)
-				remove_values_from(it.tnode, value_allocator);
-			next = (++it).tnode;
-			erase_node(cur);
-		}
-		erase_node(cur);
+	void clear(node_ptr node) {
+		clear_impl(node, false);
 	}
-
+		
 	void swap(trie_type& t)
 	{
 		// is it OK?

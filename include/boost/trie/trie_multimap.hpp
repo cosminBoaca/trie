@@ -7,7 +7,6 @@
 
 #include <boost/trie/trie.hpp>
 
-
 namespace boost { namespace tries {
 
 template<typename Key, typename Value>
