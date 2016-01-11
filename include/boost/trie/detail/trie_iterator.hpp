@@ -8,59 +8,58 @@
 #include <boost/trie/detail/trie_node.hpp>
 #include <boost/type_traits/remove_const.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <boost/mpl/and.hpp>
 #include <boost/blank.hpp>
+#include <boost/trie/detail/value_storage_policy.hpp>
 
 namespace boost {  namespace tries {
 
 namespace detail {
 
-template<typename Key, typename Value, bool isMultiValue, typename Enable = void>
+template<typename Key, typename ValueStoragePolicy, bool isMultiValue>
 struct trie_iterator;
 
-template<typename Key, typename Value>
-struct trie_iterator<Key, Value, true>
+template<typename Key, typename ValueStoragePolicy>
+struct trie_iterator<Key, ValueStoragePolicy, true>
 {
+	typedef typename ValueStoragePolicy::value_type Value;
 	typedef std::bidirectional_iterator_tag iterator_category;
 	typedef Key key_type;
 	typedef std::pair<std::vector<key_type>, Value> value_type;
 	typedef std::pair<std::vector<key_type>, Value&> reference;
 	typedef std::pair<std::vector<key_type>, Value&>* pointer;
 	typedef ptrdiff_t difference_type;
-	typedef typename boost::remove_const<Value>::type non_const_value_type;
-	typedef trie_iterator<Key, non_const_value_type, true> iterator;
-	typedef trie_iterator<Key, Value, true> iter_type;
-	typedef iter_type self;
-	typedef trie_iterator<Key, const Value, true> const_iterator;
-	typedef trie_node<Key, non_const_value_type, true> trie_node_type;
+
+	typedef typename ValueStoragePolicy::iterator value_iterator;
+	typedef typename ValueStoragePolicy::non_const_value_policy_type non_const_value_storage_policy;
+	typedef typename ValueStoragePolicy::const_value_policy_type const_value_storage_policy;
+	typedef trie_iterator<Key, non_const_value_storage_policy, true> iterator;
+	typedef trie_iterator<Key, ValueStoragePolicy, true> self;
+	typedef trie_iterator<Key, const_value_storage_policy, true> const_iterator;
+	typedef trie_node<Key, non_const_value_storage_policy> trie_node_type;
 	typedef trie_node_type* trie_node_ptr;
-	typedef value_list_node<Key, non_const_value_type> value_node_type;
-	typedef value_node_type* value_node_ptr;
 	typedef size_t size_type;
-	typedef typename trie_node_type::children_type node_children_type;
+	typedef typename trie_node_type::children_container_type node_children_type;
 	typedef typename node_children_type::iterator children_iterator;
 	typedef typename node_children_type::reverse_iterator children_reverse_iterator;
 
 	trie_node_ptr tnode;
-	value_node_ptr vnode;
+	value_iterator viter;
 
 public:
-	explicit trie_iterator() : tnode(0), vnode(0)
+	explicit trie_iterator() : tnode(0), viter(0)
 	{
 	}
 
-	trie_iterator(trie_node_ptr x) : tnode(x), vnode(x->value_list_header)
+	trie_iterator(trie_node_ptr x) : tnode(x), viter(x->value_list.begin())
 	{
 	}
 
-	trie_iterator(value_node_ptr x) : tnode(x->node_in_trie), vnode(x)
+	explicit trie_iterator(trie_node_ptr t, value_iterator v) : tnode(t), viter(v)
 	{
 	}
 
-	explicit trie_iterator(trie_node_ptr t, value_node_ptr v) : tnode(t), vnode(v)
-	{
-	}
-
-	trie_iterator(const iterator &it) : tnode(it.tnode), vnode(it.vnode)
+	trie_iterator(const iterator &it) : tnode(it.tnode), viter(it.viter)
 	{
 	}
 
@@ -82,7 +81,7 @@ public:
 
 	reference operator*() const
 	{
-		return reference(get_key(), vnode->value);
+		return reference(get_key(), *viter);
 	}
 
 	pointer operator->() const
@@ -92,18 +91,18 @@ public:
 
 	bool operator==(const trie_iterator& other) const
 	{
-		return tnode == other.tnode && vnode == other.vnode;
+		return tnode == other.tnode && viter == other.viter;
 	}
 
 	bool operator!=(const trie_iterator& other) const
 	{
-		return tnode != other.tnode || vnode != other.vnode;
+		return tnode != other.tnode || viter != other.viter;
 	}
 
 	void go_up_forward() {
 		typename node_children_type::iterator it;
 		tnode = tnode->parent;
-		vnode = tnode->value_list_header;
+		viter = tnode->value_list.begin();
 		while (tnode->parent != NULL) {
 			it = ++(node_children_type::s_iterator_to(*tnode));
 			if (it != tnode->parent->children.end()) {
@@ -111,7 +110,7 @@ public:
 				if (tnode->no_value())
 					go_down_forward();
 				else
-					vnode = tnode->value_list_header;
+					viter = tnode->value_list.begin();
 				break;
 			}
 			tnode = tnode->parent;
@@ -124,19 +123,20 @@ public:
 		do  {
 			tnode = &(*(tnode->children.begin()));
 		} while (!tnode->children.empty() && tnode->no_value());
-		vnode = tnode->value_list_header;
+		viter = tnode->value_list.begin();
 		return true;
 	}
 
 	void go_down_backward() {
 		if (tnode->children.empty()) {
-			vnode = tnode->value_list_header;
+			viter = tnode->value_list.begin();
 			return;
 		}
 		do {
 			tnode = &(*(tnode->children.rbegin()));
 		} while(!tnode->children.empty());
-		vnode = tnode->value_list_tail;
+		viter = tnode->value_list.end();
+		std::advance(viter, -1);
 	}
 
 	void go_up_backward() {
@@ -162,11 +162,11 @@ public:
 			return;
 		/*
 		 *First check is usefull when iterator is used for erasure
-		 *by the clear function. In that case vnode gets invalided
-		 *and the vnode->next would generate memory error
+		 *by the clear function. In that case viter gets invalided
+		 *and the viter->next would generate memory error
 		 */
-		if (!tnode->no_value() && vnode->next != NULL) {
-			vnode = static_cast<value_node_ptr>(vnode->next);
+		if (!tnode->no_value() && viter != tnode->value_list.end()) {
+			++viter;
 			return;
 		}
 
@@ -178,7 +178,7 @@ public:
 				if (tnode->no_value()) {
 					go_down_forward();
 				} else {
-					vnode = tnode->value_list_header;
+					viter = tnode->value_list.begin();
 				}
 			} else {
 				go_up_forward();
@@ -192,8 +192,8 @@ public:
 		 *no_value() check is useful when iterator is on the root node
 		 *and value may be NULL. This happens at rbegin() call
 		 */
-		if (!tnode->no_value() && vnode->pred != NULL) {
-			vnode = static_cast<value_node_ptr>(vnode->pred);
+		if (!tnode->no_value() && viter != tnode->value_list.begin()) {
+			--viter;
 			return;
 		}
 
@@ -216,22 +216,10 @@ public:
 	   in order to handle specializations that do not have a value list
 	*/
 	bool __erase_self_value_node() {
-		value_node_ptr vp = this->vnode;
-		trie_node_ptr trie_node = this->tnode;
-		if (vp->next == NULL && vp->pred == NULL)
+		if (tnode->count() == 1)
 			return true;
-		 if (vp->pred) {
-			 vp->pred->next = vp->next;
-		 } else {
-			 trie_node->value_list_header = static_cast<value_node_ptr>(vp->next);
-		 }
-		 if (vp->next) {
-			 vp->next->pred = vp->pred;
-		 } else {
-			trie_node->value_list_tail = static_cast<value_node_ptr>(vp->pred);
-		 }
-		 delete vp;
-		 return false;
+		tnode->value_list.erase(viter);
+		return false;
 	}
 
 	self& operator++()
@@ -261,25 +249,26 @@ public:
 	}
 };
 
-template<typename Key, typename Value>
-struct trie_iterator<Key, Value, false,
-	typename boost::disable_if<boost::is_same<typename boost::remove_const<Value>::type, void> >::type>
+template<typename Key, typename ValueStoragePolicy>
+struct trie_iterator<Key, ValueStoragePolicy, false>
 {
+	typedef typename ValueStoragePolicy::value_type Value;
 	typedef std::bidirectional_iterator_tag iterator_category;
 	typedef Key key_type;
 	typedef std::pair<std::vector<key_type>, Value> value_type;
 	typedef std::pair<std::vector<key_type>, Value&> reference;
 	typedef std::pair<std::vector<key_type>, Value&>* pointer;
 	typedef ptrdiff_t difference_type;
-	typedef typename boost::remove_const<Value>::type non_const_value_type;
-	typedef trie_iterator<Key, non_const_value_type, false> iterator;
-	typedef trie_iterator<Key, Value, false> iter_type;
-	typedef iter_type self;
-	typedef trie_iterator<Key, const Value, false> const_iterator;
-	typedef trie_node<Key, non_const_value_type, false> trie_node_type;
+
+	typedef typename ValueStoragePolicy::non_const_value_policy_type non_const_value_storage_policy;
+	typedef typename ValueStoragePolicy::const_value_policy_type const_value_storage_policy;
+	typedef trie_iterator<Key, non_const_value_storage_policy, false> iterator;
+	typedef trie_iterator<Key, ValueStoragePolicy, false> self;
+	typedef trie_iterator<Key, const_value_storage_policy, false> const_iterator;
+	typedef trie_node<Key, non_const_value_storage_policy> trie_node_type;
 	typedef trie_node_type* trie_node_ptr;
 	typedef size_t size_type;
-	typedef typename trie_node_type::children_type node_children_type;
+	typedef typename trie_node_type::children_container_type node_children_type;
 	typedef typename node_children_type::iterator children_iterator;
 	typedef typename node_children_type::reverse_iterator children_reverse_iterator;
 
@@ -453,9 +442,8 @@ public:
 	}
 };
 
-template<typename Key, typename Value>
-struct trie_iterator<Key, Value, false,
-	typename boost::enable_if<boost::is_same<typename boost::remove_const<Value>::type, void> >::type>
+template<typename Key>
+struct trie_iterator<Key, no_value_policy, false>
 {
 	typedef std::bidirectional_iterator_tag iterator_category;
 	typedef Key key_type;
@@ -463,14 +451,13 @@ struct trie_iterator<Key, Value, false,
 	typedef std::vector<key_type> reference;
 	typedef std::vector<key_type>* pointer;
 	typedef ptrdiff_t difference_type;
-	typedef trie_iterator<Key, void, false> iterator;
-	typedef trie_iterator<Key, Value, false> iter_type;
-	typedef iter_type self;
-	typedef trie_iterator<Key, const void, false> const_iterator;
-	typedef trie_node<Key, void, false> trie_node_type;
+	typedef trie_iterator<Key, no_value_policy, false> iterator;
+	typedef trie_iterator<Key, no_value_policy, false> self;
+	typedef trie_iterator<Key, no_value_policy, false> const_iterator;
+	typedef trie_node<Key, no_value_policy> trie_node_type;
 	typedef trie_node_type* trie_node_ptr;
 	typedef size_t size_type;
-	typedef typename trie_node_type::children_type node_children_type;
+	typedef typename trie_node_type::children_container_type node_children_type;
 	typedef typename node_children_type::iterator children_iterator;
 	typedef typename node_children_type::reverse_iterator children_reverse_iterator;
 
