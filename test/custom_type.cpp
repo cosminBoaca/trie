@@ -270,4 +270,5 @@ int main() {
 	clear();
 	erase_iterator();
 	erase_key();
+	return boost::report_errors();
 }
